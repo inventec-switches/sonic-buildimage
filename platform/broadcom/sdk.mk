@@ -1,4 +1,17 @@
-BRCM_OPENNSL_KERNEL = opennsl-modules-3.16.0-5-amd64_3.4.1.11-2_amd64.deb
-$(BRCM_OPENNSL_KERNEL)_URL = "https://sonicstorage.blob.core.windows.net/packages/opennsl-modules-3.16.0-5-amd64_3.4.1.11-2_amd64.deb?sv=2015-04-05&sr=b&sig=xtf8nafmS1pcqx5hhBsfmLNSx2BeqmwN4Dwq5uwM1bo%3D&se=2031-11-16T21%3A54%3A27Z&sp=r"
+OPENNSL_VERSION = 3.5.0.4
 
-SONIC_ONLINE_DEBS += $(BRCM_OPENNSL_KERNEL)
+export OPENNSL_VERSION
+
+BRCM_LIBOPENNSL = libopennsl_$(OPENNSL_VERSION)_amd64.deb
+$(BRCM_LIBOPENNSL)_PATH = files/broadcom-binary
+SONIC_COPY_DEBS += $(BRCM_LIBOPENNSL)
+
+# Implicitly. BRCM_OPENNSL_KERNEL and BRCM_LIBOPENNSL_DEV is compiled with BRCM_LIBOPENNSL together
+BRCM_OPENNSL_KERNEL = opennsl-modules-3.16.0-5-amd64_$(OPENNSL_VERSION)_amd64.deb
+$(BRCM_OPENNSL_KERNEL)_DEPENDS += $(LINUX_HEADERS) $(LINUX_HEADERS_COMMON)
+$(BRCM_OPENNSL_KERNEL)_PATH = files/broadcom-binary
+SONIC_COPY_DEBS += $(BRCM_OPENNSL_KERNEL)
+
+BRCM_LIBOPENNSL_DEV = libopennsl-dev_$(OPENNSL_VERSION)_amd64.deb
+$(BRCM_LIBOPENNSL_DEV)_PATH = files/broadcom-binary
+SONIC_COPY_DEBS += $(BRCM_LIBOPENNSL_DEV)
