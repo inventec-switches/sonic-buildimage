@@ -1052,7 +1052,7 @@ struct inv_port_layout_s cottonwood_rangeley_port_layout[] = {
  * ===========================================================
  */
 #ifdef SWPS_MAPLE
-unsigned maple_gpio_rest_mux = MUX_RST_GPIO_505_PCA9548;
+unsigned maple_gpio_rest_mux = 249;
 
 struct inv_ioexp_layout_s maple_ioexp_layout[] = {
     /* IOEXP_ID / IOEXP_TYPE / { Chan_ID, Chip_addr, Read_offset, Write_offset, config_offset, data_default, conf_default } */

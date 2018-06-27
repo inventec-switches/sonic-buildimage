@@ -155,8 +155,13 @@ static struct inv_i2c_board_info i2cdev_list[] = {
 
 /////////////////////////////////////////////////////////////////////////////////////////
 static struct 	i2c_gpio_platform_data 	i2c_gpio_platdata0 = {
+#if 0
 	.scl_pin = 494,//58,
 	.sda_pin = 511,//75,
+#else
+	.scl_pin = 238,
+	.sda_pin = 255,
+#endif
     
 	.udelay  = 5, //5:100kHz
 	.sda_is_open_drain = 0,
@@ -188,13 +193,15 @@ static int __init inv_platform_init(void)
     outl( inl(0x500) | (1<<7), 0x500);  //SYS_RDY_N (GPIO7)
     outl( inl(0x501) | (1<<7), 0x501);  //BMC_HEART_BEAT (GPIO15)
     outl( inl(0x503) | (1<<2)|(1<<3), 0x503); //PSOC_HEART_BEAT(26),CPLD_HEART_BEAT(27)
-   
+
+
     ret = platform_device_register(&device_i2c_gpio0);
     if (ret) {
 	printk(KERN_ERR "i2c-gpio: device_i2c_gpio0 register fail %d\n", ret);
     }
+    mdelay(500); //wait for device_i2c_gpio register successfully
 
-   for(i=0; i<ARRAY_SIZE(i2cdev_list); i++) {
+    for(i=0; i<ARRAY_SIZE(i2cdev_list); i++) {
         adap = i2c_get_adapter( i2cdev_list[i].ch );
         if (adap == NULL) {
             printk("platform get channel %d adapter fail\n", i);
@@ -215,5 +222,5 @@ module_init(inv_platform_init);
 //arch_initcall(inv_platform_init);
 
 MODULE_AUTHOR("Inventec");
-MODULE_DESCRIPTION("Cypess Platform devices");
+MODULE_DESCRIPTION("Maple Platform devices");
 MODULE_LICENSE("GPL");
