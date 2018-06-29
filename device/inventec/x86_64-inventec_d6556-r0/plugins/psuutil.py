@@ -15,7 +15,7 @@ except ImportError as e:
 class PsuUtil(PsuBase):
     """Platform-specific PSUutil class"""
 
-    PSU_DIR = "/sys/bus/i2c/devices/0-0066"
+    PSU_DIR = "/sys/class/hwmon/hwmon1"
 
     def __init__(self):
         PsuBase.__init__(self)

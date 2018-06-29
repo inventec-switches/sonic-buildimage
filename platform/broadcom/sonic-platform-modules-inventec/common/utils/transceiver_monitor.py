@@ -4,18 +4,7 @@
 # 
 # Editor: James Huang ( Huang.James@inventec.com )
 #  
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# 
 
 """
 Usage: %(scriptName)s [options] command object
@@ -48,6 +37,7 @@ args = []
 INV_REDWOOD_PLATFORM = "SONiC-Inventec-d7032-100"
 INV_CYPRESS_PLATFORM = "SONiC-Inventec-d7054"
 INV_SEQUOIA_PLATFORM = "SONiC-Inventec-d7264"
+INV_MAPLE_PLATFORM = "SONiC-Inventec-d6556"
 
 transceiver_type_dict = { 
                           "FCBG110SD1C03": "SR",
@@ -145,8 +135,9 @@ class BCMUtil(bcmshell):
         else:
             return self.port_to_bcm_mapping     
     
-    def show_port_to_bcm_mapping(self):  
-        print self.port_to_bcm_mapping
+    def show_port_to_bcm_mapping(self): 
+        for key,value in self.port_to_bcm_mapping.iteritems():
+            print "{0}---{1}".format(key, value)    
     
     def get_eagle_port(self):
         return self.eagle_list
@@ -160,6 +151,8 @@ class BCMUtil(bcmshell):
                 self.eagle_list = [66,100]
             elif name == INV_SEQUOIA_PLATFORM:
                 self.eagle_list = [66,100]
+            elif name == INV_MAPLE_PLATFORM:
+                self.eagle_list = [66,130]
             else:
                 self.eagle_list = []
                 
@@ -167,7 +160,8 @@ class BCMUtil(bcmshell):
         return self.sal_config_list
 
     def show_sal_config_list(self):
-        print self.sal_config_list
+        for key,value in self.sal_config_list.iteritems():
+            print "{0}---{1}".format(key, value)
         
     def initial_sal_config_list( self ):
         content = self.run("config")  
@@ -202,7 +196,8 @@ class TransceiverUtil(SfpUtil):
         return self.transceiver_port_mapping
         
     def show_transceiver_port_mapping(self):
-        print self.transceiver_port_mapping        
+        for key,value in self.transceiver_port_mapping.iteritems():
+            print "{0}---{1}".format(key, value)     
        
     def get_bcm_port_name(self, index):
         if self.transceiver_port_mapping.has_key(index) and bcm_obj.get_sal_config_list().has_key(self.transceiver_port_mapping[index]["bcm"]):
@@ -217,7 +212,8 @@ class TransceiverUtil(SfpUtil):
             return self.port_to_i2c_mapping
     
     def show_port_to_i2c_mapping(self):
-        print self.port_to_i2c_mapping
+        for key,value in self.port_to_i2c_mapping.iteritems():
+            print "{0}---{1}".format(key, value)
         
     def get_eeprom_partNum(self, portNum):
         tempdict = dict()
@@ -248,13 +244,13 @@ class TransceiverUtil(SfpUtil):
     def set_transceiver_type( self, portNum, pn ):
         type = self.get_transceiver_type( pn )
         if type is not None:             
-            if bcm_obj.get_platform() == INV_SEQUOIA_PLATFORM:
+            if bcm_obj.get_platform() == INV_SEQUOIA_PLATFORM or bcm_obj.get_platform() == INV_MAPLE_PLATFORM :
                 speed = bcm_obj.get_sal_config_list()[self.transceiver_port_mapping[portNum]["bcm"]]["speed"]
                 bcm_obj.execute_command( "port %s if=%s speed=%d" % ( self.get_bcm_port_name(portNum), type, speed ) )
             else:
                 bcm_obj.execute_command( "port %s if=%s" % ( self.get_bcm_port_name(portNum), type ) )
-            #print "Detecting port {0} need to change interface type {1} ({2})".format(self.get_bcm_port_name(portNum), type, self.get_transceiver_port_mapping()[portNum]["pn"])
-            log_message("Detecting port {0} need to change interface type {1} ({2})".format(self.get_bcm_port_name(portNum), type, self.get_transceiver_port_mapping()[portNum]["pn"]) )
+            print "Detecting port {0}({1})  need to change interface type {2} ({3})".format( self.get_bcm_port_name(portNum), portNum, type, self.get_transceiver_port_mapping()[portNum]["pn"])
+            #log_message("Detecting port {0} need to change interface type {1} ({2})".format(self.get_bcm_port_name(portNum), type, self.get_transceiver_port_mapping()[portNum]["pn"]) )
     
     def initial_transceiver_port_mapping(self):
         for index in self.get_port_to_i2c_mapping().keys():
@@ -267,7 +263,29 @@ class TransceiverUtil(SfpUtil):
         for index in self.get_port_to_i2c_mapping().keys():
             if index >= self.qsfp_port_start and index <= self.qsfp_port_end :
                 self.set_low_power_mode(index, False)
+            else:
+                # To set tx_disable
+                self.set_tx_disable(index)
 
+    def set_tx_disable(self, port_num):
+        if port_num >= self.qsfp_port_start and port_num <= self.qsfp_port_end :
+            pass
+        else:
+            try:
+                tx_file = open("/sys/class/swps/port"+str(port_num)+"/tx_disable", "r+")
+            except IOError as e:
+                print "Error: unable to open file: %s" % str(e)
+                return False
+
+            reg_value = int(tx_file.readline().rstrip())
+
+            # always set 0 to tx_disable field
+            if reg_value == 1 :
+                reg_value = 0        
+                tx_file.write(hex(reg_value))
+                tx_file.close()
+
+        
 def main():
     try:
         global DEBUG  
@@ -307,14 +325,17 @@ def main():
         # Initial the sal config list
         bcm_obj.parsing_eagle_port()
         bcm_obj.initial_sal_config_list()
-        bcm_obj.parsing_port_list()                 
-        # bcm_obj.show_port_to_bcm_mapping()                 
         # bcm_obj.show_sal_config_list()
+        bcm_obj.parsing_port_list()                 
+        #bcm_obj.show_port_to_bcm_mapping()                 
+        #bcm_obj.show_sal_config_list()
+        # transceiver_obj.show_port_to_i2c_mapping()
         
         # Initial the transceiver_obj 
         transceiver_obj.initial_transceiver_port_mapping()       
         # transceiver_obj.show_transceiver_port_mapping()
-                          
+         
+        # Improve the power mode for QSFP ports         
         transceiver_obj.set_power_mode_for_QSFP()
 
         while 1 :
@@ -325,8 +346,10 @@ def main():
                 value = transceiver_obj.get_eeprom_partNum_from_parser_eeprom_dict(info)
                 if transceiver_obj.get_transceiver_port_mapping().has_key(index) is not False and transceiver_obj.get_transceiver_port_mapping()[index]["pn"] <> value:
                     transceiver_obj.get_transceiver_port_mapping()[index]["pn"] = value
-                    transceiver_obj.set_transceiver_type(index,value)    
-                    #transceiver_obj.show_transceiver_port_mapping()            
+                    transceiver_obj.set_transceiver_type(index,value) 
+                    transceiver_obj.set_tx_disable(index)
+                    #transceiver_obj.show_transceiver_port_mapping()     
+            # transceiver_obj.show_transceiver_port_mapping()         
             time.sleep(1)
 
     except (Exception, KeyboardInterrupt) as e:
@@ -337,6 +360,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
 
 
 

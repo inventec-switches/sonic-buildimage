@@ -4,18 +4,7 @@
 # 
 # Editor: James Huang ( Huang.James@inventec.com )
 #  
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 
 """
 Usage: %(scriptName)s [options] command object
@@ -47,6 +36,8 @@ args = []
 INV_REDWOOD_PLATFORM = "SONiC-Inventec-d7032-100"
 INV_CYPRESS_PLATFORM = "SONiC-Inventec-d7054"
 INV_SEQUOIA_PLATFORM = "SONiC-Inventec-d7264"
+INV_MAPLE_PLATFORM = "SONiC-Inventec-d6556"
+
 PSOC_NAME = "name"
 HWMON_PATH = "/sys/class/hwmon/"
 SWITCH_TEMP_FILE_NAME = "switch_tmp"
@@ -140,4 +131,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
