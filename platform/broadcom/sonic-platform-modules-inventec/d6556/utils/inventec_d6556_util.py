@@ -112,8 +112,9 @@ instantiate = [
 
 
 drivers =[
-#'lpc_ich',
-#'i2c-i801',
+'gpio_ich',
+'lpc_ich',
+'i2c-i801',
 'i2c-mux',
 'i2c-mux-pca954x',
 'i2c-dev',
@@ -129,8 +130,11 @@ def system_install():
     global FORCE
 
     #remove default drivers to avoid modprobe order conflicts
-    #status, output = exec_cmd("rmmod i2c_ismt ", 1)
-    #status, output = exec_cmd("rmmod i2c-i801 ", 1)
+    status, output = exec_cmd("rmmod i2c_ismt ", 1)
+    status, output = exec_cmd("rmmod i2c-i801 ", 1)
+    status, output = exec_cmd("rmmod gpio_ich ", 1)
+    status, output = exec_cmd("rmmod lpc_ich ", 1)
+
 
     #install drivers
     for i in range(0,len(drivers)):

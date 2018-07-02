@@ -287,58 +287,65 @@ class TransceiverUtil(SfpUtil):
 
         
 def main():
-    try:
-        global DEBUG  
-        global transceiver_obj
-        global bcm_obj
-        
-        initalNotOK = True
-        retestCount = 0 
-        while initalNotOK :
-            try:                
-                transceiver_obj = TransceiverUtil()
-                bcm_obj = BCMUtil()
-                initalNotOK = False
-            except Exception, e:               
-                log_message("Exception. The warning is {0}, Retry again ({1})".format(str(e),retestCount) )                    
-                retestCount = retestCount + 1
-            time.sleep(5)
-         
-        log_message( "Object initialed successfully" )  
 
-        options, args = getopt.getopt(sys.argv[1:], 'hd', ['help',
-                                                           'debug'
-                                                              ])
-        for opt, arg in options:
-            if opt in ('-h', '--help'):
-                show_help()
-            elif opt in ('-d', '--debug'):            
-                DEBUG = True
-                logging.basicConfig(level=logging.INFO)
-            else:
-                logging.info("no option")
- 
-        # Before loop, You could execute specific command to initial chip
-        for cmd_index in initial_command :
-            bcm_obj.execute_command(cmd_index)
-        
-        # Initial the sal config list
-        bcm_obj.parsing_eagle_port()
-        bcm_obj.initial_sal_config_list()
-        # bcm_obj.show_sal_config_list()
-        bcm_obj.parsing_port_list()                 
-        #bcm_obj.show_port_to_bcm_mapping()                 
-        #bcm_obj.show_sal_config_list()
-        # transceiver_obj.show_port_to_i2c_mapping()
-        
-        # Initial the transceiver_obj 
-        transceiver_obj.initial_transceiver_port_mapping()       
-        # transceiver_obj.show_transceiver_port_mapping()
-         
-        # Improve the power mode for QSFP ports         
-        transceiver_obj.set_power_mode_for_QSFP()
+    global DEBUG  
+    global transceiver_obj
+    global bcm_obj
+    
+    initalNotOK = True
+    retestCount = 0 
+    while initalNotOK :
+        try:                
+            transceiver_obj = TransceiverUtil()
+            bcm_obj = BCMUtil()
+            initalNotOK = False
+        except Exception, e:               
+            log_message("Exception. The warning is {0}, Retry again ({1})".format(str(e),retestCount) )                    
+            retestCount = retestCount + 1
+        time.sleep(5)
+     
+    log_message( "Object initialed successfully" )  
+    options, args = getopt.getopt(sys.argv[1:], 'hd', ['help',
+                                                       'debug'
+                                                          ])
+    for opt, arg in options:
+        if opt in ('-h', '--help'):
+            show_help()
+        elif opt in ('-d', '--debug'):            
+            DEBUG = True
+            logging.basicConfig(level=logging.INFO)
+        else:
+            logging.info("no option")
+    
+    initalNotOK = True
+    while initalNotOK :
+        try :
+            # Before loop, You could execute specific command to initial chip
+            for cmd_index in initial_command :
+                bcm_obj.execute_command(cmd_index)
+            
+            # Initial the sal config list
+            bcm_obj.parsing_eagle_port()
+            bcm_obj.initial_sal_config_list()
+            # bcm_obj.show_sal_config_list()
+            bcm_obj.parsing_port_list()                 
+            #bcm_obj.show_port_to_bcm_mapping()                 
+            #bcm_obj.show_sal_config_list()
+            # transceiver_obj.show_port_to_i2c_mapping()
+            
+            # Initial the transceiver_obj 
+            transceiver_obj.initial_transceiver_port_mapping()       
+            # transceiver_obj.show_transceiver_port_mapping()
+             
+            # Improve the power mode for QSFP ports         
+            transceiver_obj.set_power_mode_for_QSFP()
+            initalNotOK = False
+        except Exception, e:               
+            log_message("Exception. The warning is {0}".format(str(e)) )
+        time.sleep(5)            
 
-        while 1 :
+    while 1 :
+        try:
             if bcm_obj.get_platform() == INV_SEQUOIA_PLATFORM:
                 bcm_obj.parsing_port_list()  
             for index in transceiver_obj.get_port_to_i2c_mapping().keys():
@@ -349,17 +356,18 @@ def main():
                     transceiver_obj.set_transceiver_type(index,value) 
                     transceiver_obj.set_tx_disable(index)
                     #transceiver_obj.show_transceiver_port_mapping()     
-            # transceiver_obj.show_transceiver_port_mapping()         
-            time.sleep(1)
+            # transceiver_obj.show_transceiver_port_mapping()       
+        except Exception, e:
+            log_message("Exception. The warning is {0}".format(str(e)) )            
+        time.sleep(1)
 
-    except (Exception, KeyboardInterrupt) as e:
-        log_message("Terminating this python daemon ({0})".format(e))   
-        syslog.closelog()
-        del transceiver_obj
-        del bcm_obj
+    syslog.closelog()
+    del transceiver_obj
+    del bcm_obj
 
 if __name__ == "__main__":
     main()
+
 
 
 

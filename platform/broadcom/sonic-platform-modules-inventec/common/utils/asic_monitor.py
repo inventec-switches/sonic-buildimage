@@ -36,8 +36,6 @@ args = []
 INV_REDWOOD_PLATFORM = "SONiC-Inventec-d7032-100"
 INV_CYPRESS_PLATFORM = "SONiC-Inventec-d7054"
 INV_SEQUOIA_PLATFORM = "SONiC-Inventec-d7264"
-INV_MAPLE_PLATFORM = "SONiC-Inventec-d6556"
-
 PSOC_NAME = "name"
 HWMON_PATH = "/sys/class/hwmon/"
 SWITCH_TEMP_FILE_NAME = "switch_tmp"
@@ -47,7 +45,6 @@ def show_help():
     sys.exit(0)
 
 def log_message( string ):
-    print string
     syslog.openlog("asic_monitor", syslog.LOG_PID, facility=syslog.LOG_DAEMON)
     syslog.syslog(syslog.LOG_NOTICE, string)
 
@@ -78,36 +75,36 @@ class BCMUtil(bcmshell):
         self.cmd(cmd)
 
 def main():
-    try:
-        global DEBUG  
-        global bcm_obj
-        
-        initalNotOK = True
-        retestCount = 0 
-        while initalNotOK :
-            try:                
-                bcm_obj = BCMUtil()
-                initalNotOK = False
-            except Exception, e:               
-                log_message("Exception. The warning is {0}, Retry again ({1})".format(str(e),retestCount) )                    
-                retestCount = retestCount + 1
-            time.sleep(5)
-         
-        log_message( "Object initialed successfully" )  
 
-        options, args = getopt.getopt(sys.argv[1:], 'hd', ['help',
-                                                           'debug'
-                                                              ])
-        for opt, arg in options:
-            if opt in ('-h', '--help'):
-                show_help()
-            elif opt in ('-d', '--debug'):            
-                DEBUG = True
-                logging.basicConfig(level=logging.INFO)
-            else:
-                logging.info("no option")
-        
-        while 1 :
+    global DEBUG
+    global bcm_obj
+
+    initalNotOK = True
+    retestCount = 0
+    while initalNotOK :
+        try:
+            bcm_obj = BCMUtil()
+            initalNotOK = False
+        except Exception, e:
+            log_message("Exception. The warning is {0}, Retry again ({1})".format(str(e),retestCount) )
+            retestCount = retestCount + 1
+        time.sleep(5)
+
+    log_message( "Object initialed successfully" )
+    options, args = getopt.getopt(sys.argv[1:], 'hd', ['help',
+                                                       'debug'
+                                                          ])
+    for opt, arg in options:
+        if opt in ('-h', '--help'):
+            show_help()
+        elif opt in ('-d', '--debug'):
+            DEBUG = True
+            logging.basicConfig(level=logging.INFO)
+        else:
+            logging.info("no option")
+
+    while 1 :
+        try:
             bcm_obj.parsing_asic_temp()
             for index in os.listdir(HWMON_PATH):
                 file_list = os.listdir("{0}/{1}/device/".format(HWMON_PATH,index))
@@ -115,21 +112,23 @@ def main():
                     with open( "{0}/{1}/device/{2}".format(HWMON_PATH, index, PSOC_NAME), 'rb') as readPtr:
                         content = readPtr.read().strip()
                         if bcm_obj.get_platform() == INV_SEQUOIA_PLATFORM :
-                            if content == "inv_bmc" and SWITCH_TEMP_FILE_NAME in file_list:  
-                                os.system("echo {0} > {1}/{2}/device/{3}".format( ( bcm_obj.get_asic_temperature() * 1000 ), HWMON_PATH, index, SWITCH_TEMP_FILE_NAME )) 
+                            if content == "inv_bmc" and SWITCH_TEMP_FILE_NAME in file_list:
+                                os.system("echo {0} > {1}/{2}/device/{3}".format( ( bcm_obj.get_asic_temperature() * 1000 ), HWMON_PATH, index, SWITCH_TEMP_FILE_NAME ))
                                 break
                         else :
                             if content == "inv_psoc" and SWITCH_TEMP_FILE_NAME in file_list:
-                                os.system("echo {0} > {1}/{2}/device/{3}".format( ( bcm_obj.get_asic_temperature() * 1000 ), HWMON_PATH, index, SWITCH_TEMP_FILE_NAME )) 
+                                os.system("echo {0} > {1}/{2}/device/{3}".format( ( bcm_obj.get_asic_temperature() * 1000 ), HWMON_PATH, index, SWITCH_TEMP_FILE_NAME ))
                                 break
-            time.sleep(5)
+        except Exception, e:
+            log_message("Exception. The warning is {0}".format(str(e)) )           
+        time.sleep(5)
 
-    except (Exception, KeyboardInterrupt) as e:
-        log_message("Terminating this python daemon ({0})".format(e))   
-        syslog.closelog()
-        del bcm_obj
+    syslog.closelog()
+    del bcm_obj
 
 if __name__ == "__main__":
     main()
+
+
 
 
