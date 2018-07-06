@@ -38,6 +38,7 @@ PORT_DATA_OFFSET_ADDR   = 0xA0
 INV_MAGNOLIA            = "SONiC-Inventec-d6254qs"
 INV_REDWOOD             = "SONiC-Inventec-d7032-100"
 INV_CYPRESS             = "SONiC-Inventec-d7054"
+INV_MAPLE               = "SONiC-Inventec-d6556"
 INV_SEQUOIA             = ""
 BOARD_TPYE              = ""
 EAGLE_CORE              = []
@@ -148,8 +149,16 @@ def _board_init():
     elif platform.rstrip() == INV_SEQUOIA:
         BOARD_TPYE = "inventec_d7264q28b"
 
+    elif platform.rstrip() == INV_MAPLE:
+        BOARD_TPYE = "inventec_d6556"
+        fp = open('/usr/share/sonic/device/x86_64-inventec_d6556-r0/led_proc_init.soc', "r")
+        _remap_registers(fp)
+        #led process: m0 led process that is controlled by linkscan_led_fw.bin and custom_led.bin
+        exit(0)
+
     else:
         BOARD_TPYE = "not found"
+        exit(0)
 
     syslog.syslog(syslog.LOG_INFO, "Device: {0}".format(BOARD_TPYE))
 

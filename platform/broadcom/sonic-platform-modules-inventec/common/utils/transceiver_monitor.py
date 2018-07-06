@@ -250,7 +250,7 @@ class TransceiverUtil(SfpUtil):
             else:
                 bcm_obj.execute_command( "port %s if=%s" % ( self.get_bcm_port_name(portNum), type ) )
             print "Detecting port {0}({1})  need to change interface type {2} ({3})".format( self.get_bcm_port_name(portNum), portNum, type, self.get_transceiver_port_mapping()[portNum]["pn"])
-            #log_message("Detecting port {0} need to change interface type {1} ({2})".format(self.get_bcm_port_name(portNum), type, self.get_transceiver_port_mapping()[portNum]["pn"]) )
+            log_message("Detecting port {0} need to change interface type {1} ({2})".format(self.get_bcm_port_name(portNum), type, self.get_transceiver_port_mapping()[portNum]["pn"]) )
     
     def initial_transceiver_port_mapping(self):
         for index in self.get_port_to_i2c_mapping().keys():
@@ -337,12 +337,13 @@ def main():
             transceiver_obj.initial_transceiver_port_mapping()       
             # transceiver_obj.show_transceiver_port_mapping()
              
-            # Improve the power mode for QSFP ports         
-            transceiver_obj.set_power_mode_for_QSFP()
             initalNotOK = False
         except Exception, e:               
             log_message("Exception. The warning is {0}".format(str(e)) )
         time.sleep(5)            
+    
+    # Improve the power mode for QSFP ports
+    transceiver_obj.set_power_mode_for_QSFP()
 
     while 1 :
         try:
