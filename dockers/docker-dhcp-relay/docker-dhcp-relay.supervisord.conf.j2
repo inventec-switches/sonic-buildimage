@@ -53,6 +53,9 @@ command=/usr/sbin/dhcrelay -d -m discard -a %%h:%%p %%P --name-alias-map-file /t
 {%- for (name, prefix) in PORTCHANNEL_INTERFACE -%}
 {%- if prefix | ipv4 %} -i {{ name }}{% endif -%}
 {%- endfor -%}
+{%- for (name, prefix) in VLAN_INTERFACE -%}
+{%- if (prefix | ipv4) and (name != vlan_name) %} -i {{ name }}{% endif -%}
+{%- endfor -%}
 {%- for dhcp_server in VLAN[vlan_name]['dhcp_servers'] %} {{ dhcp_server }}{% endfor %}
 
 priority=3
