@@ -1,9 +1,17 @@
-BRCM_SAI = libsaibcm_3.1.3.5-3_amd64.deb
-$(BRCM_SAI)_URL = "https://sonicstorage.blob.core.windows.net/packages/libsaibcm_3.1.3.5-3_amd64.deb?sv=2015-04-05&sr=b&sig=lzB9IHpJuMEENr9N9W0LBFamJ7mpvRVWgigfQmpIrPc%3D&se=2155-06-05T09%3A13%3A41Z&sp=r"
+BRCM_SAI_VERSION = 3.3.2.4-3
 
-BRCM_SAI_DEV = libsaibcm-dev_3.1.3.5-3_amd64.deb
-$(eval $(call add_derived_package,$(BRCM_SAI),$(BRCM_SAI_DEV)))
-$(BRCM_SAI_DEV)_URL = "https://sonicstorage.blob.core.windows.net/packages/libsaibcm-dev_3.1.3.5-3_amd64.deb?sv=2015-04-05&sr=b&sig=WoRAz6j8G3Xk%2BT3MOmhp5f%2BvWggw%2BgGgk2JtDJHkKjs%3D&se=2155-06-05T09%3A14%3A46Z&sp=r"
+export BRCM_SAI_VERSION
 
-SONIC_ONLINE_DEBS += $(BRCM_SAI) $(BRCM_SAI_DEV)
+BRCM_SAI = libsaibcm_$(BRCM_SAI_VERSION)_amd64.deb
+$(BRCM_SAI)_PATH = files/broadcom-binary
+
+BRCM_SAI_DEV = libsaibcm-dev_$(BRCM_SAI_VERSION)_amd64.deb
+$(BRCM_SAI_DEV)_PATH = files/broadcom-binary
+
+SONIC_COPY_DEBS += $(BRCM_SAI) $(BRCM_SAI_DEV)
 $(BRCM_SAI_DEV)_DEPENDS += $(BRCM_SAI)
+
+BRCM_OPENNSL_KERNEL = libsaibcm-modules-3.16.0-5-amd64_$(BRCM_SAI_VERSION)_amd64.deb
+$(BRCM_OPENNSL_KERNEL)_DEPENDS += $(LINUX_HEADERS) $(LINUX_HEADERS_COMMON)
+$(BRCM_OPENNSL_KERNEL)_PATH = files/broadcom-binary
+SONIC_COPY_DEBS += $(BRCM_OPENNSL_KERNEL)

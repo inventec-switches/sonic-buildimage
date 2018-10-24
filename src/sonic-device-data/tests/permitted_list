@@ -132,3 +132,11 @@ xgxs_lcpll_xtal_refclk
 xgxs_pdetect_1
 xgxs_rx_lane_map
 xgxs_tx_lane_map
+serdes_post2_driver_current
+cancun_dir
+led_fw_dir
+ifp_inports_support_enable
+pdma_dv_free_count
+pdma_dv_free_size
+pdma_descriptor_prefetch_enable
+port_flex_enable

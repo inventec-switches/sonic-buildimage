@@ -80,7 +80,7 @@
         </IPInterface>
         <IPInterface>
           <Name i:nil="true"/>
-          <AttachTo>Ethernet4</AttachTo>
+          <AttachTo>Ethernet1</AttachTo>
           <Prefix>10.10.2.25/30</Prefix>
         </IPInterface>
       </IPInterfaces>
@@ -93,20 +93,18 @@
   <PngDec>
     <DeviceInterfaceLinks>
       <DeviceLinkBase i:type="DeviceInterfaceLink">
-        <Bandwidth>40000</Bandwidth>
         <ElementType>DeviceInterfaceLink</ElementType>
         <EndDevice>OCPSCH0104001MS</EndDevice>
-        <EndPort>Ethernet24</EndPort>
+        <EndPort>Ethernet6</EndPort>
         <StartDevice>SONiC-Inventec-d7054</StartDevice>
         <StartPort>Ethernet0</StartPort>
       </DeviceLinkBase>
       <DeviceLinkBase i:type="DeviceInterfaceLink">
-        <Bandwidth>40000</Bandwidth>
         <ElementType>DeviceInterfaceLink</ElementType>
         <EndDevice>OCPSCH0104002MS</EndDevice>
-        <EndPort>Ethernet24</EndPort>
+        <EndPort>Ethernet6</EndPort>
         <StartDevice>SONiC-Inventec-d7054</StartDevice>
-        <StartPort>Ethernet4</StartPort>
+        <StartPort>Ethernet1</StartPort>
       </DeviceLinkBase>
     </DeviceInterfaceLinks>
     <Devices>
