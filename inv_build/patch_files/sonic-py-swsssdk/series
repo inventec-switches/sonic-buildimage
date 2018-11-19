@@ -1,0 +1,5 @@
+# This series applies to sonic-py-swsssdk submodule GIT commit
+[CodeBase] 6272b5f7abb743411c703dac46eb39f951b57818
+# Please note the order in sequence
+[order]
+Changed-the-redis-package-dependency-and-locked-it-b.patch
