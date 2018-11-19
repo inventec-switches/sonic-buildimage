@@ -116,6 +116,7 @@ showtag:
 init :
 	@git submodule update --init --recursive
 	@git submodule foreach --recursive '[ -f .git ] && echo "gitdir: $$(realpath --relative-to=. $$(cut -d" " -f2 .git))" > .git'
+	@sh inv_build/apply_patch.sh
 
 reset :
 	@echo && echo -n "Warning! All local changes will be lost. Proceed? [y/N]: "

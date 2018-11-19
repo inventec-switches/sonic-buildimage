@@ -1,0 +1,35 @@
+From 64aa778246b9a8dc8829297d34165bd95dc66e1d Mon Sep 17 00:00:00 2001
+From: James Huang <huang.james@inventec.com>
+Date: Thu, 15 Nov 2018 21:21:07 +0800
+Subject: [PATCH] queuestat: Remove the LAG interface information
+
+---
+ scripts/queuestat | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/scripts/queuestat b/scripts/queuestat
+index b93251a..8a651c7 100755
+--- a/scripts/queuestat
++++ b/scripts/queuestat
+@@ -46,6 +46,7 @@ COUNTERS_QUEUE_NAME_MAP = "COUNTERS_QUEUE_NAME_MAP"
+ COUNTERS_QUEUE_TYPE_MAP = "COUNTERS_QUEUE_TYPE_MAP"
+ COUNTERS_QUEUE_INDEX_MAP = "COUNTERS_QUEUE_INDEX_MAP"
+ COUNTERS_QUEUE_PORT_MAP = "COUNTERS_QUEUE_PORT_MAP"
++PORT_CHANNEL_INTERFACE_PREFIX = "PortChannel"
+ 
+ cnstat_dir = 'N/A'
+ cnstat_fqn_file = 'N/A'
+@@ -65,6 +66,10 @@ class Queuestat(object):
+ 
+         # Get all ports
+         self.counter_port_name_map = self.db.get_all(self.db.COUNTERS_DB, COUNTERS_PORT_NAME_MAP)
++        # Remove the LAG interface
++        for index in self.counter_port_name_map.keys():
++            if index.find(PORT_CHANNEL_INTERFACE_PREFIX) > -1 :
++                del self.counter_port_name_map[index]
+         if self.counter_port_name_map is None:
+             print "COUNTERS_PORT_NAME_MAP is empty!"
+             sys.exit(1)
+-- 
+2.1.4
+

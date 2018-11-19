@@ -1,0 +1,6 @@
+# This series applies to sonic-platform-daemons submodule GIT commit
+[CodeBase] 747d5c386299a8fac2acb4f4594fe2498d33df36
+# Please note the order in sequence
+[order]
+portstat-Remove-the-LAG-interface-information.patch
+queuestat-Remove-the-LAG-interface-information.patch

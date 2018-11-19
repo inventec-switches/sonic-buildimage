@@ -1,0 +1,35 @@
+From 26ae1ea803c5a5f237217281bbd9b50d648339fa Mon Sep 17 00:00:00 2001
+From: James Huang <huang.james@inventec.com>
+Date: Thu, 15 Nov 2018 20:37:55 +0800
+Subject: [PATCH] portstat: Remove the LAG interface information
+
+---
+ scripts/portstat | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/scripts/portstat b/scripts/portstat
+index 7f31aa7..44a3910 100755
+--- a/scripts/portstat
++++ b/scripts/portstat
+@@ -58,6 +58,7 @@ PORT_OPER_STATUS_FIELD = "oper_status"
+ PORT_ADMIN_STATUS_FIELD = "admin_status"
+ PORT_STATUS_VALUE_UP = 'UP'
+ PORT_STATUS_VALUE_DOWN = 'DOWN'
++PORT_CHANNEL_INTERFACE_PREFIX = "PortChannel"
+ 
+ PORT_STATE_UP = 'U'
+ PORT_STATE_DOWN = 'D'
+@@ -90,6 +91,10 @@ class Portstat(object):
+ 
+         # Get the info from database
+         counter_port_name_map = self.db.get_all(self.db.COUNTERS_DB, COUNTERS_PORT_NAME_MAP);
++        # Remove the LAG interface
++        for index in counter_port_name_map.keys():
++            if index.find(PORT_CHANNEL_INTERFACE_PREFIX) > -1 :
++                del counter_port_name_map[index]
+         # Build a dictionary of the stats
+         cnstat_dict = OrderedDict()
+         cnstat_dict['time'] = datetime.datetime.now()
+-- 
+2.1.4
+

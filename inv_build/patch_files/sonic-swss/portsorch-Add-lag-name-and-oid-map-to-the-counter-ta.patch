@@ -1,0 +1,68 @@
+From 9099262c1d4eaf7c0d98917be1eb027cf4767008 Mon Sep 17 00:00:00 2001
+From: James Huang <huang.james@inventec.com>
+Date: Thu, 15 Nov 2018 20:39:24 +0800
+Subject: [PATCH] portsorch: Add lag-name and oid map to the counter table
+
+---
+ orchagent/portsorch.cpp | 18 ++++++++++++++++++
+ orchagent/portsorch.h   |  1 +
+ 2 files changed, 19 insertions(+)
+
+diff --git a/orchagent/portsorch.cpp b/orchagent/portsorch.cpp
+index fdee9b0..64ccb53 100644
+--- a/orchagent/portsorch.cpp
++++ b/orchagent/portsorch.cpp
+@@ -124,6 +124,7 @@ PortsOrch::PortsOrch(DBConnector *db, vector<table_name_with_pri_t> &tableNames)
+     /* Initialize counter table */
+     m_counter_db = shared_ptr<DBConnector>(new DBConnector(COUNTERS_DB, DBConnector::DEFAULT_UNIXSOCKET, 0));
+     m_counterTable = unique_ptr<Table>(new Table(m_counter_db.get(), COUNTERS_PORT_NAME_MAP));
++    m_countersTable = unique_ptr<Table>(new Table(m_counter_db.get(), COUNTERS_TABLE ));
+ 
+     /* Initialize port table */
+     m_portTable = unique_ptr<Table>(new Table(db, APP_PORT_TABLE_NAME));
+@@ -2364,6 +2365,20 @@ bool PortsOrch::addLag(string lag_alias)
+     lag.m_members = set<string>();
+     m_portList[lag_alias] = lag;
+ 
++    /* Add lag name map to counter table */
++    SWSS_LOG_NOTICE("Create LAG name map to the COUNTER table. <%s><%s>", lag_alias.c_str(), sai_serialize_object_id(lag_id).c_str());
++    FieldValueTuple tuple(lag_alias, sai_serialize_object_id(lag_id));
++    vector<FieldValueTuple> fields;
++    fields.push_back(tuple);
++    m_counterTable->set("", fields);
++
++    /* Add lag oid to counters table */
++    SWSS_LOG_NOTICE("Create an empty LAG (COUNTERS:oid:%s)", sai_serialize_object_id(lag_id).c_str());
++    FieldValueTuple temp("", "");
++    vector<FieldValueTuple> attrs;
++    attrs.push_back(temp);
++    m_countersTable->set(sai_serialize_object_id(lag_id).c_str(),attrs);
++
+     return true;
+ }
+ 
+@@ -2392,6 +2407,9 @@ bool PortsOrch::removeLag(Port lag)
+ 
+     SWSS_LOG_NOTICE("Remove LAG %s lid:%lx", lag.m_alias.c_str(), lag.m_lag_id);
+ 
++    m_counterTable->del(lag.m_alias);
++    m_countersTable->del(sai_serialize_object_id(lag.m_lag_id).c_str());
++
+     m_portList.erase(lag.m_alias);
+ 
+     return true;
+diff --git a/orchagent/portsorch.h b/orchagent/portsorch.h
+index d33238f..b00996a 100644
+--- a/orchagent/portsorch.h
++++ b/orchagent/portsorch.h
+@@ -72,6 +72,7 @@ public:
+     void generateQueueMap();
+ private:
+     unique_ptr<Table> m_counterTable;
++    unique_ptr<Table> m_countersTable;
+     unique_ptr<Table> m_portTable;
+     unique_ptr<Table> m_queueTable;
+     unique_ptr<Table> m_queuePortTable;
+-- 
+2.1.4
+

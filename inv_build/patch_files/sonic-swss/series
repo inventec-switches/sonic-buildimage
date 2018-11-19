@@ -1,0 +1,5 @@
+# This series applies to sonic-swss submodule GIT commit
+[CodeBase] 902239ad4c67c8e85da296b00badbc08b9820001
+# Please note the order in sequence
+[order]
+portsorch-Add-lag-name-and-oid-map-to-the-counter-ta.patch
