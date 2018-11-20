@@ -1,0 +1,5 @@
+# This series applies to sonic-platform-common submodule GIT commit
+[CodeBase] d98600e8ed8df0280cb07487132e20adc48d7f6e
+# Please note the order in sequence
+[order]
+sff8472-Fix-incorrect-VendorOUI-decode-type.patch

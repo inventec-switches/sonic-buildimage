@@ -1,0 +1,25 @@
+From 0a4d63fe3bef62f9b71289fecad794b868e8055a Mon Sep 17 00:00:00 2001
+From: James Huang <huang.james@inventec.com>
+Date: Tue, 20 Nov 2018 11:26:36 +0800
+Subject: [PATCH] sff8472: Fix incorrect VendorOUI decode type
+
+---
+ sonic_sfp/sff8472.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/sonic_sfp/sff8472.py b/sonic_sfp/sff8472.py
+index 0831dc8..1539fc9 100644
+--- a/sonic_sfp/sff8472.py
++++ b/sonic_sfp/sff8472.py
+@@ -347,7 +347,7 @@ class sff8472InterfaceId(sffbase):
+             'VendorOUI':
+                 {'offset':37,
+                  'size':3,
+-                 'type' : 'str'},
++                 'type' : 'hex'},
+             'VendorPN':
+                 {'offset':40,
+                  'size':16,
+-- 
+2.1.4
+
