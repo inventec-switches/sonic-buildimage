@@ -3,3 +3,4 @@
 # Please note the order in sequence
 [order]
 sff8472-Fix-incorrect-VendorOUI-decode-type.patch
+Add-Wavelength-and-TX_Power-attribute.patch

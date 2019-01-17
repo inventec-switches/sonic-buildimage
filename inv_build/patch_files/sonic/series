@@ -1,0 +1,5 @@
+# This series applies to sonic 201807 GIT commit
+[CodeBase] 352532abf3b2a223d688318e2e327cb1c2d9b831
+# Please note the order in sequence
+[order]
+xcvrd-enhancement-to-support-transceiver-sensor-moni.patch

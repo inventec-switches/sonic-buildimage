@@ -1,0 +1,153 @@
+From 07b54e72e51ef1c1a5626ee06bf8b1b81892a1ed Mon Sep 17 00:00:00 2001
+From: James Huang <huang.james@inventec.com>
+Date: Fri, 9 Nov 2018 10:52:46 +0800
+Subject: [PATCH] [xcvrd] Add new feature to get the data from the Inventec
+ SWPS driver
+
+---
+ sonic-xcvrd/scripts/xcvrd | 89 ++++++++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 85 insertions(+), 4 deletions(-)
+
+diff --git a/sonic-xcvrd/scripts/xcvrd b/sonic-xcvrd/scripts/xcvrd
+index f9d7b47..4eb4fbe 100644
+--- a/sonic-xcvrd/scripts/xcvrd
++++ b/sonic-xcvrd/scripts/xcvrd
+@@ -27,7 +27,6 @@ SYSLOG_IDENTIFIER = os.path.basename(__file__)
+ 
+ PLATFORM_ROOT_PATH = '/usr/share/sonic/device'
+ SONIC_CFGGEN_PATH = '/usr/local/bin/sonic-cfggen'
+-MINIGRAPH_PATH = '/etc/sonic/minigraph.xml'
+ HWSKU_KEY = 'DEVICE_METADATA.localhost.hwsku'
+ PLATFORM_KEY = 'DEVICE_METADATA.localhost.platform'
+ 
+@@ -62,6 +61,9 @@ VOLT_UNIT = 'Volts'
+ POWER_UNIT = 'dBm'
+ BIAS_UNIT = 'mA'
+ 
++# swps driver folder
++SWPS_FOLDER = "/sys/class/swps/"
++
+ #========================== Syslog wrappers ==========================
+ 
+ def log_info(msg, also_print_to_console=False):
+@@ -117,7 +119,7 @@ def get_platform_and_hwsku():
+     proc.wait()
+     platform = stdout.rstrip('\n')
+ 
+-    proc = subprocess.Popen([SONIC_CFGGEN_PATH, '-m', MINIGRAPH_PATH, '-v', HWSKU_KEY],
++    proc = subprocess.Popen([SONIC_CFGGEN_PATH, '-d', '-v', HWSKU_KEY],
+                             stdout=subprocess.PIPE,
+                             shell=False,
+                             stderr=subprocess.STDOUT)
+@@ -233,6 +235,9 @@ def post_port_sfp_info_to_db(logical_port_name, table):
+         ganged_port = True
+ 
+     for physical_port in physical_port_list:
++        if not platform_sfputil.get_presence(physical_port):
++            continue
++
+         port_name = get_physical_port_name(logical_port_name, ganged_member_num, ganged_port)
+         ganged_member_num += 1
+ 
+@@ -252,6 +257,77 @@ def post_port_sfp_info_to_db(logical_port_name, table):
+             log_error("This functionality is currently not implemented for this platform")
+             sys.exit(3)
+ 
++def get_swps_transceiver_dom_info_dict( physical_port_id ):
++    import re
++    dom_info_dict = {}
++    # initial all entires
++    dom_info_dict['temperature'] = "N/A"
++    dom_info_dict['voltage'] = "N/A"
++    dom_info_dict['rx1power'] = "-inf"
++    dom_info_dict['rx2power'] = "-inf"
++    dom_info_dict['rx3power'] = "-inf"
++    dom_info_dict['rx4power'] = "-inf"
++    dom_info_dict['tx1bias'] = "N/A"
++    dom_info_dict['tx2bias'] = "N/A"
++    dom_info_dict['tx3bias'] = "N/A"
++    dom_info_dict['tx4bias'] = "N/A"
++    dom_info_dict['tx1power'] = "N/A"
++    dom_info_dict['tx2power'] = "N/A"
++    dom_info_dict['tx3power'] = "N/A"
++    dom_info_dict['tx4power'] = "N/A"
++
++    file_list = os.listdir(SWPS_FOLDER)
++    portname = "port{0}".format(physical_port_id)
++    if portname in os.listdir(SWPS_FOLDER):
++        path = "{0}{1}".format(SWPS_FOLDER,portname)
++
++        # temperature
++        try:
++            with open( "{0}/temperature".format(path), 'rb') as readPtr:
++                dom_info_dict['temperature'] = readPtr.read().replace('\n', '')
++        except:
++            pass
++        # voltage
++        try:
++            with open( "{0}/voltage".format(path), 'rb') as readPtr:
++                dom_info_dict['voltage'] = readPtr.read().replace('\n', '')
++        except:
++            pass
++        # rx_power
++        try:
++            with open( "{0}/rx_power".format(path), 'rb') as readPtr:
++                count = 1
++                for line in readPtr:
++                    power = re.search(r"(RX\-[1234]\:)*(?P<rx>\d+\.\d+)", line)
++                    if power is not None:
++                        dom_info_dict['rx{0}power'.format(count)] = power.group("rx")
++                        count = count + 1
++        except:
++            pass
++        # tx_bias
++        try:
++            with open( "{0}/tx_bias".format(path), 'rb') as readPtr:
++                count = 1
++                for line in readPtr:
++                    bias = re.search(r"(TX\-[1234]\:)*(?P<bias>\d+\.\d+)", line)
++                    if bias is not None:
++                        dom_info_dict['tx{0}bias'.format(count)] = bias.group("bias")
++                        count = count + 1
++        except:
++            pass
++        # tx_power
++        try:
++            with open( "{0}/tx_power".format(path), 'rb') as readPtr:
++                count = 1
++                for line in readPtr:
++                    power = re.search(r"(TX\-[1234]\:)*(?P<tx>\d+\.\d+)", line)
++                    if power is not None:
++                        dom_info_dict['tx{0}power'.format(count)] = power.group("tx")
++                        count = count + 1
++        except:
++            pass
++    return dom_info_dict
++
+ # update dom sensor info to db
+ def post_port_dom_info_to_db(logical_port_name, table):
+     ganged_port = False
+@@ -266,13 +342,18 @@ def post_port_dom_info_to_db(logical_port_name, table):
+         ganged_port = True
+ 
+     for physical_port in physical_port_list:
++        if not platform_sfputil.get_presence(physical_port):
++            continue
++
+         port_name = get_physical_port_name(logical_port_name, ganged_member_num, ganged_port)
+         ganged_member_num += 1
+ 
+         try:
+-            dom_info_dict = platform_sfputil.get_transceiver_dom_info_dict(physical_port)
++            #dom_info_dict = platform_sfputil.get_transceiver_dom_info_dict(physical_port)
++            dom_info_dict = get_swps_transceiver_dom_info_dict(physical_port)
++            print physical_port, dom_info_dict
+             if dom_info_dict is not None:
+-                beautify_dom_info_dict(dom_info_dict)
++                #beautify_dom_info_dict(dom_info_dict)
+                 fvs = swsscommon.FieldValuePairs([('temperature', dom_info_dict['temperature']),
+                                                   ('voltage', dom_info_dict['voltage']),
+                                                   ('rx1power', dom_info_dict['rx1power']),
+-- 
+2.1.4
+

@@ -1,0 +1,121 @@
+From 287c46b9dbf013f7504d85984b9dcd0abe83b17a Mon Sep 17 00:00:00 2001
+From: Dada Shih <shih.dada@inventec.com>
+Date: Fri, 28 Dec 2018 13:11:20 +0800
+Subject: [PATCH] Add Wavelength and TX_Power attribute
+
+---
+ sonic_sfp/sff8436.py | 48 ++++++++++++++++++++++++++++++++++++++++++++++--
+ sonic_sfp/sff8472.py |  4 ++++
+ sonic_sfp/sffbase.py |  8 ++++++++
+ 3 files changed, 58 insertions(+), 2 deletions(-)
+
+diff --git a/sonic_sfp/sff8436.py b/sonic_sfp/sff8436.py
+index 63ca3a4..f2db5fb 100644
+--- a/sonic_sfp/sff8436.py
++++ b/sonic_sfp/sff8436.py
+@@ -345,6 +345,10 @@ class sff8436InterfaceId(sffbase):
+                 {'offset': 56,
+                  'size'  : 2,
+                  'type'  : 'str'},
++	    'Wavelength':
++                {'offset': 58,
++                 'size'  : 2,
++                 'type'  : 'qsfp_word'},
+             'Vendor SN':
+                 {'offset': 68,
+                  'size'  : 16,
+@@ -980,7 +984,27 @@ class sff8436Dom(sffbase):
+                 {'offset':48,
+                  'size':2,
+                  'type': 'func',
+-                 'decode': { 'func':calc_bias}}}
++                 'decode': { 'func':calc_bias}},
++		   'TX1Power':
++                {'offset':50,
++                 'size':2,
++                 'type': 'func',
++                 'decode': { 'func':calc_tx_power}},
++                   'TX2Power':
++                {'offset':52,
++                 'size':2,
++                 'type': 'func',
++                 'decode': { 'func':calc_tx_power}},
++                   'TX3Power':
++                {'offset':54,
++                 'size':2,
++                 'type': 'func',
++                 'decode': { 'func':calc_tx_power}},
++                   'TX4Power':
++                {'offset':56,
++                 'size':2,
++                 'type': 'func',
++                 'decode': { 'func':calc_tx_power}}}
+ 
+     dom_map = {
+            'ModuleMonitorValues':
+@@ -1071,7 +1095,27 @@ class sff8436Dom(sffbase):
+             {'offset': 14,
+              'size': 2,
+              'type': 'func',
+-             'decode': {'func': calc_bias}}
++             'decode': {'func': calc_bias}},
++	'TX1Power':
++            {'offset': 0,
++             'size': 2,
++             'type': 'func',
++             'decode': {'func': calc_tx_power}},
++        'TX2Power':
++            {'offset': 2,
++             'size': 2,
++             'type': 'func',
++             'decode': {'func': calc_tx_power}},
++        'TX3Power':
++            {'offset': 4,
++             'size': 2,
++             'type': 'func',
++             'decode': {'func': calc_tx_power}},
++        'TX4Power':
++            {'offset': 6,
++             'size': 2,
++             'type': 'func',
++             'decode': {'func': calc_tx_power}}
+         }
+ 
+     dom_channel_monitor_params_with_tx_power = {
+diff --git a/sonic_sfp/sff8472.py b/sonic_sfp/sff8472.py
+index 1539fc9..6a37597 100644
+--- a/sonic_sfp/sff8472.py
++++ b/sonic_sfp/sff8472.py
+@@ -352,6 +352,10 @@ class sff8472InterfaceId(sffbase):
+                 {'offset':40,
+                  'size':16,
+                  'type' : 'str'},
++	    'Wavelength':
++                {'offset':60,
++                 'size':2,
++                 'type' : 'sfp_word'},
+             'VendorSN':
+                 {'offset':68,
+                  'size':16,
+diff --git a/sonic_sfp/sffbase.py b/sonic_sfp/sffbase.py
+index 6d944b6..b49c103 100644
+--- a/sonic_sfp/sffbase.py
++++ b/sonic_sfp/sffbase.py
+@@ -143,6 +143,14 @@ class sffbase(object):
+         elif type == 'hex':
+             value = '-'.join(eeprom_data[offset:offset+size])
+ 
++        elif type == 'qsfp_word':
++	    value = eeprom_data[offset] + eeprom_data[offset+1]
++	    value = int(value, 16) / 20
++
++        elif type == 'sfp_word':
++	    value = eeprom_data[offset] + eeprom_data[offset+1]
++	    value = int(value, 16)
++
+         return value
+ 
+     # Recursively parses sff data into dictionary
+-- 
+2.1.4
+

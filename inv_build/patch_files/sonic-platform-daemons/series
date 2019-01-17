@@ -1,0 +1,6 @@
+# This series applies to sonic-platform-daemons submodule GIT commit
+[CodeBase] b1b9169bf4cf5b3d0e4778dc51c03b99b15c0c6b
+# Please note the order in sequence
+[order]
+xcvrd-Add-new-feature-to-get-the-data-from-the-Inven.patch
+Add-Wavelength-and-RX_Am-to-db.patch

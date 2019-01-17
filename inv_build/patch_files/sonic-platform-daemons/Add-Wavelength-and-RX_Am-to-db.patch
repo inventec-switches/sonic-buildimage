@@ -1,0 +1,106 @@
+From e55f65d66acbe29d99c2eec4dbe8e0c3a5e9e7d2 Mon Sep 17 00:00:00 2001
+From: Dada Shih <shih.dada@inventec.com>
+Date: Fri, 28 Dec 2018 13:45:02 +0800
+Subject: [PATCH] Add Wavelength and RX_Am to db
+
+---
+ sonic-xcvrd/scripts/xcvrd | 35 ++++++++++++++++++++++++++++++-----
+ 1 file changed, 30 insertions(+), 5 deletions(-)
+
+diff --git a/sonic-xcvrd/scripts/xcvrd b/sonic-xcvrd/scripts/xcvrd
+index 4eb4fbe..328d250 100644
+--- a/sonic-xcvrd/scripts/xcvrd
++++ b/sonic-xcvrd/scripts/xcvrd
+@@ -220,6 +220,8 @@ def beautify_dom_info_dict(dom_info_dict):
+     dom_info_dict['tx2power'] = strip_unit_and_beautify(dom_info_dict['tx2power'], POWER_UNIT)
+     dom_info_dict['tx3power'] = strip_unit_and_beautify(dom_info_dict['tx3power'], POWER_UNIT)
+     dom_info_dict['tx4power'] = strip_unit_and_beautify(dom_info_dict['tx4power'], POWER_UNIT)
++    dom_info_dict['wavelength'] = strip_unit_and_beautify(dom_info_dict['wavelength'], POWER_UNIT)
++    dom_info_dict['rx_am'] = strip_unit_and_beautify(dom_info_dict['rx_am'], POWER_UNIT)
+ 
+ # update all the sfp info to db
+ def post_port_sfp_info_to_db(logical_port_name, table):
+@@ -271,10 +273,12 @@ def get_swps_transceiver_dom_info_dict( physical_port_id ):
+     dom_info_dict['tx2bias'] = "N/A"
+     dom_info_dict['tx3bias'] = "N/A"
+     dom_info_dict['tx4bias'] = "N/A"
+-    dom_info_dict['tx1power'] = "N/A"
+-    dom_info_dict['tx2power'] = "N/A"
+-    dom_info_dict['tx3power'] = "N/A"
+-    dom_info_dict['tx4power'] = "N/A"
++    dom_info_dict['tx1power'] = "-inf"
++    dom_info_dict['tx2power'] = "-inf"
++    dom_info_dict['tx3power'] = "-inf"
++    dom_info_dict['tx4power'] = "-inf"
++    dom_info_dict['wavelength'] = "N/A"
++    dom_info_dict['rx_am'] = "N/A"
+ 
+     file_list = os.listdir(SWPS_FOLDER)
+     portname = "port{0}".format(physical_port_id)
+@@ -287,12 +291,14 @@ def get_swps_transceiver_dom_info_dict( physical_port_id ):
+                 dom_info_dict['temperature'] = readPtr.read().replace('\n', '')
+         except:
+             pass
++
+         # voltage
+         try:
+             with open( "{0}/voltage".format(path), 'rb') as readPtr:
+                 dom_info_dict['voltage'] = readPtr.read().replace('\n', '')
+         except:
+             pass
++
+         # rx_power
+         try:
+             with open( "{0}/rx_power".format(path), 'rb') as readPtr:
+@@ -304,6 +310,7 @@ def get_swps_transceiver_dom_info_dict( physical_port_id ):
+                         count = count + 1
+         except:
+             pass
++
+         # tx_bias
+         try:
+             with open( "{0}/tx_bias".format(path), 'rb') as readPtr:
+@@ -315,6 +322,7 @@ def get_swps_transceiver_dom_info_dict( physical_port_id ):
+                         count = count + 1
+         except:
+             pass
++
+         # tx_power
+         try:
+             with open( "{0}/tx_power".format(path), 'rb') as readPtr:
+@@ -326,6 +334,21 @@ def get_swps_transceiver_dom_info_dict( physical_port_id ):
+                         count = count + 1
+         except:
+             pass
++
++	# wavelength
++        try:
++            with open( "{0}/wavelength".format(path), 'rb') as readPtr:
++                dom_info_dict['wavelength'] = readPtr.read().replace('\n', '')
++        except:
++            pass
++
++	# rx_am
++	try:
++            with open( "{0}/rx_am".format(path), 'rb') as readPtr:
++                dom_info_dict['rx_am'] = readPtr.read().replace('\n', '')
++        except:
++            pass
++
+     return dom_info_dict
+ 
+ # update dom sensor info to db
+@@ -367,7 +390,9 @@ def post_port_dom_info_to_db(logical_port_name, table):
+                                                   ('tx1power', dom_info_dict['tx1power']),
+                                                   ('tx2power', dom_info_dict['tx2power']),
+                                                   ('tx3power', dom_info_dict['tx3power']),
+-                                                  ('tx4power', dom_info_dict['tx4power'])])
++                                                  ('tx4power', dom_info_dict['tx4power']),
++						  ('wavelength', dom_info_dict['wavelength']),
++						  ('rx_am', dom_info_dict['rx_am'])])
+                 table.set(port_name, fvs)
+             else:
+                 return SFP_EEPROM_NOT_READY
+-- 
+2.1.4
+
