@@ -216,9 +216,20 @@ def main():
                 #print('SWPS event. From %s, ACTION %s, IF_TYPE %s, IF_LANE %s' % (event['DEVPATH'], event['ACTION'], event['IF_TYPE'], event['IF_LANE']))
                 portname = event['DEVPATH'].split("/")[-1]
                 try:
-                    if port_obj.get_platform() == INV_SEQUOIA_PLATFORM or port_obj.get_platform() == INV_MAPLE_PLATFORM :
+                    if port_obj.get_platform() == INV_SEQUOIA_PLATFORM :
+                        pass
+                    elif port_obj.get_platform() == INV_MAPLE_PLATFORM :
                         port_obj.parsing_port_list()  
-                        port_obj.execute_command( "port {0} if={1} speed={2}".format( port_obj.port_to_bcm_mapping[portname]["bcm_name"], event['IF_TYPE'], port_obj.port_to_bcm_mapping[portname]["speed"] ) )
+                        with open('/sys/class/swps/{0}/info'.format(portname),'r') as f:
+                            info = f.read()
+                        # The info of DAC caple is head with 28. if insert DAC, we need to enable AN feature.
+                        if info is not None and info[0:2] == "28" :
+                            port_obj.execute_command( "port {0} an=1 speed={1}".format( port_obj.port_to_bcm_mapping[portname]["bcm_name"], port_obj.port_to_bcm_mapping[portname]["speed"] ) )
+                        else:
+                            if port_obj.port_to_bcm_mapping[portname]["speed"] == 100000 :
+                                port_obj.execute_command( "port {0} an=0 if=CR4 speed={1}".format( port_obj.port_to_bcm_mapping[portname]["bcm_name"], port_obj.port_to_bcm_mapping[portname]["speed"] ) )
+                            else :
+                                port_obj.execute_command( "port {0} an=0 if=CR speed={1}".format( port_obj.port_to_bcm_mapping[portname]["bcm_name"], port_obj.port_to_bcm_mapping[portname]["speed"] ) )
                     else:
                         port_obj.execute_command( "port {0} if={1}".format( port_obj.port_to_bcm_mapping[portname]["bcm_name"], event['IF_TYPE'] ) )
                 except Exception, e:

@@ -221,6 +221,9 @@ struct eeprom_map_s {
     int addr_ext_id;       int page_ext_id;       int offset_ext_id;       int length_ext_id;
     int addr_id;           int page_id;           int offset_id;           int length_id;
     int addr_eeprom;       int page_eeprom;       int offset_eeprom;       int length_eeprom;
+    int addr_eeprom_a0;    int page_eeprom_a0;    int offset_eeprom_a0;    int length_eeprom_a0;
+    int addr_eeprom_a2;    int page_eeprom_a2;    int offset_eeprom_a2;    int length_eeprom_a2;
+    int addr_eeprom_page03;int page_eeprom_page03;int offset_eeprom_page03;int length_eeprom_page03;
     int addr_len_sm;       int page_len_sm;       int offset_len_sm;       int length_len_sm;
     int addr_len_smf;      int page_len_smf;      int offset_len_smf;      int length_len_smf;
     int addr_len_om1;      int page_len_om1;      int offset_len_om1;      int length_len_om1;
@@ -249,6 +252,24 @@ struct eeprom_map_s {
     int addr_vendor_sn;    int page_vendor_sn;    int offset_vendor_sn;    int length_vendor_sn;
     int addr_voltage;      int page_voltage;      int offset_voltage;      int length_voltage;
     int addr_wavelength;   int page_wavelength;   int offset_wavelength;   int length_wavelength;
+    int addr_alarm_flag_byte_1;              int page_alarm_flag_byte_1;              int offset_alarm_flag_byte_1;              int length_alarm_flag_byte_1;
+    int addr_alarm_flag_byte_2;              int page_alarm_flag_byte_2;              int offset_alarm_flag_byte_2;              int length_alarm_flag_byte_2;
+    int addr_temp_alarm;                     int page_temp_alarm;                     int offset_temp_alarm;                     int length_temp_alarm;
+    int addr_voltage_alarm;                  int page_voltage_alarm;                  int offset_voltage_alarm;                  int length_voltage_alarm;
+    int addr_bias_alarm;                     int page_bias_alarm;                     int offset_bias_alarm;                     int length_bias_alarm;
+    int addr_tx_power_alarm;                 int page_tx_power_alarm;                 int offset_tx_power_alarm;                 int length_tx_power_alarm;
+    int addr_rx_power_alarm;                 int page_rx_power_alarm;                 int offset_rx_power_alarm;                 int length_rx_power_alarm;
+    int addr_temp_high_alarm_threshold;      int page_temp_high_alarm_threshold;      int offset_temp_high_alarm_threshold;      int length_temp_high_alarm_threshold;
+    int addr_temp_low_alarm_threshold;       int page_temp_low_alarm_threshold;       int offset_temp_low_alarm_threshold;       int length_temp_low_alarm_threshold;
+    int addr_voltage_high_alarm_threshold;   int page_voltage_high_alarm_threshold;   int offset_voltage_high_alarm_threshold;   int length_voltage_high_alarm_threshold;
+    int addr_voltage_low_alarm_threshold;    int page_voltage_low_alarm_threshold;    int offset_voltage_low_alarm_threshold;    int length_voltage_low_alarm_threshold;
+    int addr_bias_high_alarm_threshold;      int page_bias_high_alarm_threshold;      int offset_bias_high_alarm_threshold;      int length_bias_high_alarm_threshold;
+    int addr_bias_low_alarm_threshold;       int page_bias_low_alarm_threshold;       int offset_bias_low_alarm_threshold;       int length_bias_low_alarm_threshold;
+    int addr_tx_power_high_alarm_threshold;  int page_tx_power_high_alarm_threshold;  int offset_tx_power_high_alarm_threshold;  int length_tx_power_high_alarm_threshold;
+    int addr_tx_power_low_alarm_threshold;   int page_tx_power_low_alarm_threshold;   int offset_tx_power_low_alarm_threshold;   int length_tx_power_low_alarm_threshold;
+    int addr_rx_power_high_alarm_threshold;  int page_rx_power_high_alarm_threshold;  int offset_rx_power_high_alarm_threshold;  int length_rx_power_high_alarm_threshold;
+    int addr_rx_power_low_alarm_threshold;   int page_rx_power_low_alarm_threshold;   int offset_rx_power_low_alarm_threshold;   int length_rx_power_low_alarm_threshold;
+    int addr_manufacturing_date;             int page_manufacturing_date;             int offset_manufacturing_date;             int length_manufacturing_date;
 };
 
 
@@ -633,7 +654,7 @@ struct transvr_obj_s {
     /* [Prop]: Soft Tx Fault
      * [Desc]: Soft Tx Fault which provide by transceiver
      * [Note]: (Following is info from SFF-8636)
-     *         Byte 86:
+     *         Byte 4:
      *          - Bit 0: Tx1 Fault
      *          - Bit 1: Tx2 Fault
      *          - Bit 2: Tx3 Fault
@@ -662,7 +683,187 @@ struct transvr_obj_s {
      */
     uint8_t extphy_offset;
 
+    /* [Prop]: EEPROM information
+     * [Desc]: Dump the original EERPOM hex code.
+     * [Note]: SFP+/28 => SFF-8472 A0H Byte-0~255
+     *         QSFP28  => SFF-8636 P0H Byte-0~255
+     */
     uint8_t eeprom[256];
+
+    /* [Prop]: EEPROM information
+     * [Desc]: Dump the original EERPOM hex code of SFP A0H.
+     * [Note]: SFP+/28 => SFF-8472 A0H Byte-0~127
+     */
+    uint8_t eeprom_a0[128];
+
+    /* [Prop]: EEPROM information
+     * [Desc]: Dump the original EERPOM hex code of SFP A2H.
+     * [Note]: SFP+/28 => SFF-8472 A2H Byte-0~127
+     */
+    uint8_t eeprom_a2[128];
+
+    /* [Prop]: EEPROM information
+     * [Desc]: Dump the original EERPOM hex code of QSFP Page 03.
+     * [Note]: QSFP28  => SFF-8636 P3H Byte-0~127
+     */
+    uint8_t eeprom_page03[128];
+
+    /* [Prop]: SFP Alarm Flag bit
+     * [Desc]: SFP Alarm Flag bit
+     * [Note]: SFP+/28 => SFF-8472 A2H Byte-112
+     *        Temp     High   Alarm Bit-7
+     *        Temp     Low    Alarm Bit-6
+     *        Vcc      High   Alarm Bit-5
+     *        Vcc      Low    Alarm Bit-4
+     *        Tx Bias  High   Alarm Bit-3
+     *        Tx Bias  Low    Alarm Bit-2
+     *        Tx Power High   Alarm Bit-1
+     *        Tx Power Low    Alarm Bit-0
+     */
+	uint8_t alarm_flag_byte_1;
+
+    /* [Prop]: SFP Alarm Flag bit
+     * [Desc]: SFP Alarm Flag bit
+     * [Note]: SFP+/28 => SFF-8472 A2H Byte-113
+	 *        Rx Power High   Alarm Bit-7
+	 *        Rx Power Low    Alarm Bit-6
+     */
+    uint8_t alarm_flag_byte_2;
+
+    /* [Prop]: QSFP Alarm Flag bit
+     * [Desc]: QSFP Temp Alarm Flag bit
+     * [Note]: QSFP+/28 => SFF-8636 Page 00H Byte-6
+     *        Temp High Alarm Bit-7
+     *        Temp Low  Alarm Bit-6
+	 */
+	uint8_t temp_alarm;
+
+    /* [Prop]: QSFP Alarm Flag bit
+     * [Desc]: QSFP voltage Alarm Flag bit
+     * [Note]: QSFP+/28 => SFF-8636 Page 00H Byte-7
+     *        voltage High Alarm Bit-7
+     *        voltage Low  Alarm Bit-6
+	 */
+	uint8_t voltage_alarm;
+
+    /* [Prop]: QSFP Alarm Flag bit
+     * [Desc]: QSFP RX Power Alarm Flag bit
+     * [Note]: QSFP+/28 => SFF-8636 Page 00H Byte-9~10
+     *        RX1 Power High Alarm Byte-9  Bit-7
+     *        RX1 Power Low  Alarm Byte-9  Bit-6
+     *        RX2 Power High Alarm Byte-9  Bit-3
+     *        RX2 Power Low  Alarm Byte-9  Bit-2
+     *        RX3 Power High Alarm Byte-10 Bit-7
+     *        RX3 Power Low  Alarm Byte-10 Bit-6
+     *        RX4 Power High Alarm Byte-10 Bit-3
+     *        RX4 Power Low  Alarm Byte-10 Bit-2
+	 */
+    uint8_t rx_power_alarm[2];
+
+    /* [Prop]: QSFP Alarm Flag bit
+     * [Desc]: QSFP TX bias Alarm Flag bit
+     * [Note]: QSFP+/28 => SFF-8636 Page 00H Byte-11~12
+     *        TX1 bias High Alarm Byte-11 Bit-7
+     *        TX1 bias Low  Alarm Byte-11 Bit-6
+     *        TX2 bias High Alarm Byte-11 Bit-3
+     *        TX2 bias Low  Alarm Byte-11 Bit-2
+     *        TX3 bias High Alarm Byte-12 Bit-7
+     *        TX3 bias Low  Alarm Byte-12 Bit-6
+     *        TX4 bias High Alarm Byte-12 Bit-3
+     *        TX4 bias Low  Alarm Byte-12 Bit-2
+	 */
+    uint8_t bias_alarm[2];
+
+    /* [Prop]: QSFP Alarm Flag bit
+     * [Desc]: QSFP TX Power Alarm Flag bit
+     * [Note]: QSFP+/28 => SFF-8636 Page 00H Byte-13~14
+     *        TX1 Power High Alarm Byte-13 Bit-7
+     *        TX1 Power Low  Alarm Byte-13 Bit-6
+     *        TX2 Power High Alarm Byte-13 Bit-3
+     *        TX2 Power Low  Alarm Byte-13 Bit-2
+     *        TX3 Power High Alarm Byte-14 Bit-7
+     *        TX3 Power Low  Alarm Byte-14 Bit-6
+     *        TX4 Power High Alarm Byte-14 Bit-3
+     *        TX4 Power Low  Alarm Byte-14 Bit-2
+	 */
+    uint8_t tx_power_alarm[2];
+
+    /* [Prop]: Alarm thresholds
+     * [Desc]: Transceiver temperature high alarm threshold.
+     * [Note]: SFP+/28 => SFF-8472 A2H Byte-0~1
+	 *         QSFP28  => SFF-8636 P3H Byte-128~129
+     */
+    uint8_t temp_high_alarm_threshold[2];
+
+    /* [Prop]: Alarm thresholds
+     * [Desc]: Transceiver temperature low alarm threshold.
+     * [Note]: SFP+/28 => SFF-8472 A2H Byte-2~3
+	 *         QSFP28  => SFF-8636 P3H Byte-130~131
+     */
+    uint8_t temp_low_alarm_threshold[2];
+
+    /* [Prop]: Alarm thresholds
+     * [Desc]: Transceiver voltage high alarm threshold.
+     * [Note]: SFP+/28 => SFF-8472 A2H Byte-8~9
+	 *         QSFP28  => SFF-8636 P3H Byte-144~145
+     */
+    uint8_t voltage_high_alarm_threshold[2];
+
+    /* [Prop]: Alarm thresholds
+     * [Desc]: Transceiver voltage low alarm threshold.
+     * [Note]: SFP+/28 => SFF-8472 A2H Byte-10~11
+	 *         QSFP28  => SFF-8636 P3H Byte-146~147
+     */
+    uint8_t voltage_low_alarm_threshold[2];
+
+    /* [Prop]: Alarm thresholds
+     * [Desc]: Transceiver TX bias high alarm threshold.
+     * [Note]: SFP+/28 => SFF-8472 A2H Byte-16~17
+	 *         QSFP28  => SFF-8636 P3H Byte-184~185
+     */
+    uint8_t bias_high_alarm_threshold[2];
+
+    /* [Prop]: Alarm thresholds
+     * [Desc]: Transceiver TX bias low alarm threshold.
+     * [Note]: SFP+/28 => SFF-8472 A2H Byte-18~19
+	 *         QSFP28  => SFF-8636 P3H Byte-186~187
+     */
+    uint8_t bias_low_alarm_threshold[2];
+
+    /* [Prop]: Alarm thresholds
+     * [Desc]: Transceiver TX power high alarm threshold.
+     * [Note]: SFP+/28 => SFF-8472 A2H Byte-24~25
+	 *         QSFP28  => SFF-8636 P3H Byte-192~193
+     */
+    uint8_t tx_power_high_alarm_threshold[2];
+
+    /* [Prop]: Alarm thresholds
+     * [Desc]: Transceiver TX power low alarm threshold.
+     * [Note]: SFP+/28 => SFF-8472 A2H Byte-26~27
+	 *         QSFP28  => SFF-8636 P3H Byte-194~195
+     */
+    uint8_t tx_power_low_alarm_threshold[2];
+
+    /* [Prop]: Alarm thresholds
+     * [Desc]: Transceiver RX power high alarm threshold.
+     * [Note]: SFP+/28 => SFF-8472 A2H Byte-36~37
+	 *         QSFP28  => SFF-8636 P3H Byte-176~177
+     */
+    uint8_t rx_power_high_alarm_threshold[2];
+
+    /* [Prop]: Alarm thresholds
+     * [Desc]: Transceiver RX power low alarm threshold.
+     * [Note]: SFP+/28 => SFF-8472 A2H Byte-38~39
+	 *         QSFP28  => SFF-8636 P3H Byte-178~179
+     */
+    uint8_t rx_power_low_alarm_threshold[2];
+
+    /* [Prop]: Date code
+     * [Desc]: Vendor's manufacturing date code.
+     * [Note]: SFP+/28 => SFF-8472 A0H Byte-84~91
+	 *         QSFP28  => SFF-8636 P0H Byte-212~219
+     */
+	uint8_t manufacturing_date[8];
 
     /* ========== Object private property ==========
      */
@@ -692,6 +893,9 @@ struct transvr_obj_s {
      */
     int  (*get_id)(struct transvr_obj_s *self);
     int  (*get_eeprom)(struct transvr_obj_s *self, char *buf_p);
+    int  (*get_eeprom_a0)(struct transvr_obj_s *self, char *buf_p);
+    int  (*get_eeprom_a2)(struct transvr_obj_s *self, char *buf_p);
+    int  (*get_eeprom_page03)(struct transvr_obj_s *self, char *buf_p);
     int  (*get_ext_id)(struct transvr_obj_s *self);
     int  (*get_connector)(struct transvr_obj_s *self);
     int  (*get_vendor_name)(struct transvr_obj_s *self, char *buf_p);
@@ -734,6 +938,27 @@ struct transvr_obj_s {
     int  (*get_wavelength)(struct transvr_obj_s *self, char *buf_p);
     int  (*get_extphy_offset)(struct transvr_obj_s *self, char *buf_p);
     int  (*get_extphy_reg)(struct transvr_obj_s *self, char *buf_p);
+    int  (*get_rx_power_low_alarm)(struct transvr_obj_s *self, char *buf_p);
+    int  (*get_rx_power_high_alarm)(struct transvr_obj_s *self, char *buf_p);
+    int  (*get_tx_power_low_alarm)(struct transvr_obj_s *self, char *buf_p);
+    int  (*get_tx_power_high_alarm)(struct transvr_obj_s *self, char *buf_p);
+    int  (*get_bias_low_alarm)(struct transvr_obj_s *self, char *buf_p);
+    int  (*get_bias_high_alarm)(struct transvr_obj_s *self, char *buf_p);
+    int  (*get_voltage_low_alarm)(struct transvr_obj_s *self, char *buf_p);
+    int  (*get_voltage_high_alarm)(struct transvr_obj_s *self, char *buf_p);
+    int  (*get_temp_low_alarm)(struct transvr_obj_s *self, char *buf_p);
+    int  (*get_temp_high_alarm)(struct transvr_obj_s *self, char *buf_p);
+    int  (*get_rx_power_low_alarm_threshold)(struct transvr_obj_s *self, char *buf_p);
+    int  (*get_rx_power_high_alarm_threshold)(struct transvr_obj_s *self, char *buf_p);
+    int  (*get_tx_power_low_alarm_threshold)(struct transvr_obj_s *self, char *buf_p);
+    int  (*get_tx_power_high_alarm_threshold)(struct transvr_obj_s *self, char *buf_p);
+    int  (*get_bias_low_alarm_threshold)(struct transvr_obj_s *self, char *buf_p);
+    int  (*get_bias_high_alarm_threshold)(struct transvr_obj_s *self, char *buf_p);
+    int  (*get_voltage_low_alarm_threshold)(struct transvr_obj_s *self, char *buf_p);
+    int  (*get_voltage_high_alarm_threshold)(struct transvr_obj_s *self, char *buf_p);
+    int  (*get_temp_low_alarm_threshold)(struct transvr_obj_s *self, char *buf_p);
+    int  (*get_temp_high_alarm_threshold)(struct transvr_obj_s *self, char *buf_p);
+    int  (*get_manufacturing_date)(struct transvr_obj_s *self, char *buf_p);
     int  (*set_cdr)(struct transvr_obj_s *self, int input_val);
     int  (*set_soft_rs0)(struct transvr_obj_s *self, int input_val);
     int  (*set_soft_rs1)(struct transvr_obj_s *self, int input_val);

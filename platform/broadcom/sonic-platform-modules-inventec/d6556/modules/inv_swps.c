@@ -1110,6 +1110,341 @@ show_attr_eeprom(struct device *dev_p,
                                   buf_p);
 }
 
+static ssize_t
+show_attr_eeprom_a0(struct device *dev_p,
+                          struct device_attribute *attr_p,
+                          char *buf_p){
+
+    struct transvr_obj_s *tobj_p = dev_get_drvdata(dev_p);
+    if(!tobj_p){
+        return -ENODEV;
+    }
+    return _show_transvr_str_attr(tobj_p,
+                                  tobj_p->get_eeprom_a0,
+                                  buf_p);
+}
+
+static ssize_t
+show_attr_eeprom_a2(struct device *dev_p,
+                          struct device_attribute *attr_p,
+                          char *buf_p){
+
+    struct transvr_obj_s *tobj_p = dev_get_drvdata(dev_p);
+    if(!tobj_p){
+        return -ENODEV;
+    }
+    return _show_transvr_str_attr(tobj_p,
+                                  tobj_p->get_eeprom_a2,
+                                  buf_p);
+}
+
+static ssize_t
+show_attr_eeprom_page03(struct device *dev_p,
+                          struct device_attribute *attr_p,
+                          char *buf_p){
+
+    struct transvr_obj_s *tobj_p = dev_get_drvdata(dev_p);
+    if(!tobj_p){
+        return -ENODEV;
+    }
+    return _show_transvr_str_attr(tobj_p,
+                                  tobj_p->get_eeprom_page03,
+                                  buf_p);
+}
+
+static ssize_t
+show_attr_temp_high_alarm(struct device *dev_p,
+                          struct device_attribute *attr_p,
+                          char *buf_p){
+
+    struct transvr_obj_s *tobj_p = dev_get_drvdata(dev_p);
+    if(!tobj_p){
+        return -ENODEV;
+    }
+    return _show_transvr_str_attr(tobj_p,
+                                  tobj_p->get_temp_high_alarm,
+                                  buf_p);
+}
+
+static ssize_t
+show_attr_temp_low_alarm(struct device *dev_p,
+                          struct device_attribute *attr_p,
+                          char *buf_p){
+
+    struct transvr_obj_s *tobj_p = dev_get_drvdata(dev_p);
+    if(!tobj_p){
+        return -ENODEV;
+    }
+    return _show_transvr_str_attr(tobj_p,
+                                  tobj_p->get_temp_low_alarm,
+                                  buf_p);
+}
+
+static ssize_t
+show_attr_voltage_high_alarm(struct device *dev_p,
+                          struct device_attribute *attr_p,
+                          char *buf_p){
+
+    struct transvr_obj_s *tobj_p = dev_get_drvdata(dev_p);
+    if(!tobj_p){
+        return -ENODEV;
+    }
+    return _show_transvr_str_attr(tobj_p,
+                                  tobj_p->get_voltage_high_alarm,
+                                  buf_p);
+}
+
+static ssize_t
+show_attr_voltage_low_alarm(struct device *dev_p,
+                          struct device_attribute *attr_p,
+                          char *buf_p){
+
+    struct transvr_obj_s *tobj_p = dev_get_drvdata(dev_p);
+    if(!tobj_p){
+        return -ENODEV;
+    }
+    return _show_transvr_str_attr(tobj_p,
+                                  tobj_p->get_voltage_low_alarm,
+                                  buf_p);
+}
+
+static ssize_t
+show_attr_bias_high_alarm(struct device *dev_p,
+                          struct device_attribute *attr_p,
+                          char *buf_p){
+
+    struct transvr_obj_s *tobj_p = dev_get_drvdata(dev_p);
+    if(!tobj_p){
+        return -ENODEV;
+    }
+    return _show_transvr_str_attr(tobj_p,
+                                  tobj_p->get_bias_high_alarm,
+                                  buf_p);
+}
+
+static ssize_t
+show_attr_bias_low_alarm(struct device *dev_p,
+                          struct device_attribute *attr_p,
+                          char *buf_p){
+
+    struct transvr_obj_s *tobj_p = dev_get_drvdata(dev_p);
+    if(!tobj_p){
+        return -ENODEV;
+    }
+    return _show_transvr_str_attr(tobj_p,
+                                  tobj_p->get_bias_low_alarm,
+                                  buf_p);
+}
+
+static ssize_t
+show_attr_rx_power_high_alarm(struct device *dev_p,
+                          struct device_attribute *attr_p,
+                          char *buf_p){
+
+    struct transvr_obj_s *tobj_p = dev_get_drvdata(dev_p);
+    if(!tobj_p){
+        return -ENODEV;
+    }
+    return _show_transvr_str_attr(tobj_p,
+                                  tobj_p->get_rx_power_high_alarm,
+                                  buf_p);
+}
+
+static ssize_t
+show_attr_rx_power_low_alarm(struct device *dev_p,
+                          struct device_attribute *attr_p,
+                          char *buf_p){
+
+    struct transvr_obj_s *tobj_p = dev_get_drvdata(dev_p);
+    if(!tobj_p){
+        return -ENODEV;
+    }
+    return _show_transvr_str_attr(tobj_p,
+                                  tobj_p->get_rx_power_low_alarm,
+                                  buf_p);
+}
+
+static ssize_t
+show_attr_tx_power_high_alarm(struct device *dev_p,
+                          struct device_attribute *attr_p,
+                          char *buf_p){
+
+    struct transvr_obj_s *tobj_p = dev_get_drvdata(dev_p);
+    if(!tobj_p){
+        return -ENODEV;
+    }
+    return _show_transvr_str_attr(tobj_p,
+                                  tobj_p->get_tx_power_high_alarm,
+                                  buf_p);
+}
+
+static ssize_t
+show_attr_tx_power_low_alarm(struct device *dev_p,
+                          struct device_attribute *attr_p,
+                          char *buf_p){
+
+    struct transvr_obj_s *tobj_p = dev_get_drvdata(dev_p);
+    if(!tobj_p){
+        return -ENODEV;
+    }
+    return _show_transvr_str_attr(tobj_p,
+                                  tobj_p->get_tx_power_low_alarm,
+                                  buf_p);
+}
+
+static ssize_t
+show_attr_temp_high_alarm_threshold(struct device *dev_p,
+                          struct device_attribute *attr_p,
+                          char *buf_p){
+
+    struct transvr_obj_s *tobj_p = dev_get_drvdata(dev_p);
+    if(!tobj_p){
+        return -ENODEV;
+    }
+    return _show_transvr_str_attr(tobj_p,
+                                  tobj_p->get_temp_high_alarm_threshold,
+                                  buf_p);
+}
+
+static ssize_t
+show_attr_temp_low_alarm_threshold(struct device *dev_p,
+                          struct device_attribute *attr_p,
+                          char *buf_p){
+
+    struct transvr_obj_s *tobj_p = dev_get_drvdata(dev_p);
+    if(!tobj_p){
+        return -ENODEV;
+    }
+    return _show_transvr_str_attr(tobj_p,
+                                  tobj_p->get_temp_low_alarm_threshold,
+                                  buf_p);
+}
+
+static ssize_t
+show_attr_voltage_high_alarm_threshold(struct device *dev_p,
+                          struct device_attribute *attr_p,
+                          char *buf_p){
+
+    struct transvr_obj_s *tobj_p = dev_get_drvdata(dev_p);
+    if(!tobj_p){
+        return -ENODEV;
+    }
+    return _show_transvr_str_attr(tobj_p,
+                                  tobj_p->get_voltage_high_alarm_threshold,
+                                  buf_p);
+}
+
+static ssize_t
+show_attr_voltage_low_alarm_threshold(struct device *dev_p,
+                          struct device_attribute *attr_p,
+                          char *buf_p){
+
+    struct transvr_obj_s *tobj_p = dev_get_drvdata(dev_p);
+    if(!tobj_p){
+        return -ENODEV;
+    }
+    return _show_transvr_str_attr(tobj_p,
+                                  tobj_p->get_voltage_low_alarm_threshold,
+                                  buf_p);
+}
+
+static ssize_t
+show_attr_bias_high_alarm_threshold(struct device *dev_p,
+                          struct device_attribute *attr_p,
+                          char *buf_p){
+
+    struct transvr_obj_s *tobj_p = dev_get_drvdata(dev_p);
+    if(!tobj_p){
+        return -ENODEV;
+    }
+    return _show_transvr_str_attr(tobj_p,
+                                  tobj_p->get_bias_high_alarm_threshold,
+                                  buf_p);
+}
+
+static ssize_t
+show_attr_bias_low_alarm_threshold(struct device *dev_p,
+                          struct device_attribute *attr_p,
+                          char *buf_p){
+
+    struct transvr_obj_s *tobj_p = dev_get_drvdata(dev_p);
+    if(!tobj_p){
+        return -ENODEV;
+    }
+    return _show_transvr_str_attr(tobj_p,
+                                  tobj_p->get_bias_low_alarm_threshold,
+                                  buf_p);
+}
+
+static ssize_t
+show_attr_rx_power_high_alarm_threshold(struct device *dev_p,
+                          struct device_attribute *attr_p,
+                          char *buf_p){
+
+    struct transvr_obj_s *tobj_p = dev_get_drvdata(dev_p);
+    if(!tobj_p){
+        return -ENODEV;
+    }
+    return _show_transvr_str_attr(tobj_p,
+                                  tobj_p->get_rx_power_high_alarm_threshold,
+                                  buf_p);
+}
+
+static ssize_t
+show_attr_rx_power_low_alarm_threshold(struct device *dev_p,
+                          struct device_attribute *attr_p,
+                          char *buf_p){
+
+    struct transvr_obj_s *tobj_p = dev_get_drvdata(dev_p);
+    if(!tobj_p){
+        return -ENODEV;
+    }
+    return _show_transvr_str_attr(tobj_p,
+                                  tobj_p->get_rx_power_low_alarm_threshold,
+                                  buf_p);
+}
+
+static ssize_t
+show_attr_tx_power_high_alarm_threshold(struct device *dev_p,
+                          struct device_attribute *attr_p,
+                          char *buf_p){
+
+    struct transvr_obj_s *tobj_p = dev_get_drvdata(dev_p);
+    if(!tobj_p){
+        return -ENODEV;
+    }
+    return _show_transvr_str_attr(tobj_p,
+                                  tobj_p->get_tx_power_high_alarm_threshold,
+                                  buf_p);
+}
+
+static ssize_t
+show_attr_tx_power_low_alarm_threshold(struct device *dev_p,
+                          struct device_attribute *attr_p,
+                          char *buf_p){
+
+    struct transvr_obj_s *tobj_p = dev_get_drvdata(dev_p);
+    if(!tobj_p){
+        return -ENODEV;
+    }
+    return _show_transvr_str_attr(tobj_p,
+                                  tobj_p->get_tx_power_low_alarm_threshold,
+                                  buf_p);
+}
+
+static ssize_t
+show_attr_manufacturing_date(struct device *dev_p,
+                   struct device_attribute *attr_p,
+                   char *buf_p){
+
+    struct transvr_obj_s *tobj_p = dev_get_drvdata(dev_p);
+    if(!tobj_p){
+        return -ENODEV;
+    }
+    return _show_transvr_str_attr(tobj_p,
+                                  tobj_p->get_manufacturing_date,
+                                  buf_p);
+}
 /* ========== Store functions: transceiver (R/W) attribute ==========
  */
 static ssize_t
@@ -1679,17 +2014,42 @@ static DEVICE_ATTR(comp_extend,     S_IRUGO,         show_attr_comp_extend,     
 static DEVICE_ATTR(rate_id,         S_IRUGO,         show_attr_rate_id,         NULL);
 static DEVICE_ATTR(temperature,     S_IRUGO,         show_attr_temperature,     NULL);
 static DEVICE_ATTR(voltage,         S_IRUGO,         show_attr_voltage,         NULL);
-static DEVICE_ATTR(tx_bias,         S_IRUGO,         show_attr_tx_bias,         NULL);
+static DEVICE_ATTR(bias,            S_IRUGO,         show_attr_tx_bias,         NULL);
 static DEVICE_ATTR(tx_power,        S_IRUGO,         show_attr_tx_power,        NULL);
 static DEVICE_ATTR(rx_power,        S_IRUGO,         show_attr_rx_power,        NULL);
 static DEVICE_ATTR(info,            S_IRUGO,         show_attr_info,            NULL);
 static DEVICE_ATTR(if_type,         S_IRUGO,         show_attr_if_type,         NULL);
 static DEVICE_ATTR(if_speed,        S_IRUGO,         show_attr_if_speed,        NULL);
 static DEVICE_ATTR(if_lane,         S_IRUGO,         show_attr_if_lane,         NULL);
-static DEVICE_ATTR(soft_rx_los,     S_IRUGO,         show_attr_soft_rx_los,     NULL);
 static DEVICE_ATTR(soft_tx_fault,   S_IRUGO,         show_attr_soft_tx_fault,   NULL);
 static DEVICE_ATTR(wavelength,      S_IRUGO,         show_attr_wavelength,      NULL);
 static DEVICE_ATTR(eeprom,          S_IRUGO,         show_attr_eeprom,          NULL);
+static DEVICE_ATTR(A0,              S_IRUGO,         show_attr_eeprom_a0,       NULL);
+static DEVICE_ATTR(A2,              S_IRUGO,         show_attr_eeprom_a2,       NULL);
+static DEVICE_ATTR(Page00,          S_IRUGO,         show_attr_eeprom,          NULL);
+static DEVICE_ATTR(Page03,          S_IRUGO,         show_attr_eeprom_page03,   NULL);
+static DEVICE_ATTR(soft_rx_los_signal,                  S_IRUGO,        show_attr_soft_rx_los,                      NULL);
+static DEVICE_ATTR(temperature_high_alarm,              S_IRUGO,        show_attr_temp_high_alarm,                  NULL);
+static DEVICE_ATTR(temperature_low_alarm,               S_IRUGO,        show_attr_temp_low_alarm,                   NULL);
+static DEVICE_ATTR(voltage_high_alarm,                  S_IRUGO,        show_attr_voltage_high_alarm,               NULL);
+static DEVICE_ATTR(voltage_low_alarm,                   S_IRUGO,        show_attr_voltage_low_alarm,                NULL);
+static DEVICE_ATTR(bias_high_alarm,                     S_IRUGO,        show_attr_bias_high_alarm,                  NULL);
+static DEVICE_ATTR(bias_low_alarm,                      S_IRUGO,        show_attr_bias_low_alarm,                   NULL);
+static DEVICE_ATTR(rx_power_high_alarm,                 S_IRUGO,        show_attr_rx_power_high_alarm,              NULL);
+static DEVICE_ATTR(rx_power_low_alarm,                  S_IRUGO,        show_attr_rx_power_low_alarm,               NULL);
+static DEVICE_ATTR(tx_power_high_alarm,                 S_IRUGO,        show_attr_tx_power_high_alarm,              NULL);
+static DEVICE_ATTR(tx_power_low_alarm,                  S_IRUGO,        show_attr_tx_power_low_alarm,               NULL);
+static DEVICE_ATTR(temperature_high_threshold,          S_IRUGO,        show_attr_temp_high_alarm_threshold,        NULL);
+static DEVICE_ATTR(temperature_low_threshold,           S_IRUGO,        show_attr_temp_low_alarm_threshold,         NULL);
+static DEVICE_ATTR(voltage_high_threshold,              S_IRUGO,        show_attr_voltage_high_alarm_threshold,     NULL);
+static DEVICE_ATTR(voltage_low_threshold,               S_IRUGO,        show_attr_voltage_low_alarm_threshold,      NULL);
+static DEVICE_ATTR(bias_high_threshold,                 S_IRUGO,        show_attr_bias_high_alarm_threshold,        NULL);
+static DEVICE_ATTR(bias_low_threshold,                  S_IRUGO,        show_attr_bias_low_alarm_threshold,         NULL);
+static DEVICE_ATTR(rx_power_high_threshold,             S_IRUGO,        show_attr_rx_power_high_alarm_threshold,    NULL);
+static DEVICE_ATTR(rx_power_low_threshold,              S_IRUGO,        show_attr_rx_power_low_alarm_threshold,     NULL);
+static DEVICE_ATTR(tx_power_high_threshold,             S_IRUGO,        show_attr_tx_power_high_alarm_threshold,    NULL);
+static DEVICE_ATTR(tx_power_low_threshold,              S_IRUGO,        show_attr_tx_power_low_alarm_threshold,     NULL);
+static DEVICE_ATTR(manufacturing_date,                  S_IRUGO,        show_attr_manufacturing_date,               NULL);
 static DEVICE_ATTR(tx_eq,           S_IRUGO|S_IWUSR, show_attr_tx_eq,           store_attr_tx_eq);
 static DEVICE_ATTR(rx_am,           S_IRUGO|S_IWUSR, show_attr_rx_am,           store_attr_rx_am);
 static DEVICE_ATTR(rx_em,           S_IRUGO|S_IWUSR, show_attr_rx_em,           store_attr_rx_em);
@@ -1704,8 +2064,8 @@ static DEVICE_ATTR(extphy_reg,      S_IRUGO|S_IWUSR, show_attr_extphy_reg,      
 /* ========== IO Expander attribute: from expander ==========
  */
 static DEVICE_ATTR(present,         S_IRUGO,         show_attr_present,         NULL);
-static DEVICE_ATTR(tx_fault,        S_IRUGO,         show_attr_tx_fault,        NULL);
-static DEVICE_ATTR(rxlos,           S_IRUGO,         show_attr_rxlos,           NULL);
+static DEVICE_ATTR(hard_tx_fault,   S_IRUGO,         show_attr_tx_fault,        NULL);
+static DEVICE_ATTR(hard_rx_loss_signal,  S_IRUGO,    show_attr_rxlos,           NULL);
 static DEVICE_ATTR(tx_disable,      S_IRUGO|S_IWUSR, show_attr_tx_disable,      store_attr_tx_disable);
 static DEVICE_ATTR(reset,           S_IRUGO|S_IWUSR, show_attr_reset,           store_attr_reset);
 static DEVICE_ATTR(lpmod,           S_IRUGO|S_IWUSR, show_attr_lpmod,           store_attr_lpmod);
@@ -2430,8 +2790,8 @@ register_transvr_common_attr(struct device *device_p){
         err_attr = "dev_attr_voltage";
         goto err_transvr_comm_attr;
     }
-    if (device_create_file(device_p, &dev_attr_tx_bias) < 0) {
-        err_attr = "dev_attr_tx_bias";
+    if (device_create_file(device_p, &dev_attr_bias) < 0) {
+        err_attr = "dev_attr_bias";
         goto err_transvr_comm_attr;
     }
     if (device_create_file(device_p, &dev_attr_tx_power) < 0) {
@@ -2452,6 +2812,10 @@ register_transvr_common_attr(struct device *device_p){
     }
     if (device_create_file(device_p, &dev_attr_wavelength) < 0) {
         err_attr = "dev_attr_wavelength";
+        goto err_transvr_comm_attr;
+    }
+	if (device_create_file(device_p, &dev_attr_manufacturing_date) < 0) {
+        err_attr = "dev_attr_manufacturing_date";
         goto err_transvr_comm_attr;
     }
     return 0;
@@ -2498,6 +2862,94 @@ register_transvr_sfp_attr(struct device *device_p){
         err_attr = "dev_attr_extphy_reg";
         goto err_transvr_sfp_attr;
     }
+    if (device_create_file(device_p, &dev_attr_A0) < 0) {
+        err_attr = "dev_attr_A0";
+        goto err_transvr_sfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_A2) < 0) {
+        err_attr = "dev_attr_A2";
+        goto err_transvr_sfp_attr;
+    }
+	if (device_create_file(device_p, &dev_attr_temperature_high_alarm) < 0) {
+        err_attr = "dev_attr_temperature_high_alarm";
+        goto err_transvr_sfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_temperature_low_alarm) < 0) {
+        err_attr = "dev_attr_temperature_low_alarm";
+        goto err_transvr_sfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_voltage_high_alarm) < 0) {
+        err_attr = "dev_attr_voltage_high_alarm";
+        goto err_transvr_sfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_voltage_low_alarm) < 0) {
+        err_attr = "dev_attr_voltage_low_alarm";
+        goto err_transvr_sfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_bias_high_alarm) < 0) {
+        err_attr = "dev_attr_bias_high_alarm";
+        goto err_transvr_sfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_bias_low_alarm) < 0) {
+        err_attr = "dev_attr_bias_low_alarm";
+        goto err_transvr_sfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_rx_power_high_alarm) < 0) {
+        err_attr = "dev_attr_rx_power_high_alarm";
+        goto err_transvr_sfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_rx_power_low_alarm) < 0) {
+        err_attr = "dev_attr_rx_power_low_alarm";
+        goto err_transvr_sfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_tx_power_high_alarm) < 0) {
+        err_attr = "dev_attr_tx_power_high_alarm";
+        goto err_transvr_sfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_tx_power_low_alarm) < 0) {
+        err_attr = "dev_attr_tx_power_low_alarm";
+        goto err_transvr_sfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_temperature_high_threshold) < 0) {
+        err_attr = "dev_attr_temperature_high_threshold";
+        goto err_transvr_sfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_temperature_low_threshold) < 0) {
+        err_attr = "dev_attr_temperature_low_threshold";
+        goto err_transvr_sfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_voltage_high_threshold) < 0) {
+        err_attr = "dev_attr_voltage_high_hreshold";
+        goto err_transvr_sfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_voltage_low_threshold) < 0) {
+        err_attr = "dev_attr_voltage_low_threshold";
+        goto err_transvr_sfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_bias_high_threshold) < 0) {
+        err_attr = "dev_attr_bias_high_threshold";
+        goto err_transvr_sfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_bias_low_threshold) < 0) {
+        err_attr = "dev_attr_bias_low_threshold";
+        goto err_transvr_sfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_rx_power_high_threshold) < 0) {
+        err_attr = "dev_attr_rx_power_high_threshold";
+        goto err_transvr_sfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_rx_power_low_threshold) < 0) {
+        err_attr = "dev_attr_rx_power_low_threshold";
+        goto err_transvr_sfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_tx_power_high_threshold) < 0) {
+        err_attr = "dev_attr_tx_power_high_threshold";
+        goto err_transvr_sfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_tx_power_low_threshold) < 0) {
+        err_attr = "dev_attr_tx_power_low_threshold";
+        goto err_transvr_sfp_attr;
+    }
     return 0;
 
 err_transvr_sfp_attr:
@@ -2523,8 +2975,8 @@ register_transvr_qsfp_attr(struct device *device_p){
         err_attr = "dev_attr_power_cls";
         goto err_transvr_qsfp_attr;
     }
-    if (device_create_file(device_p, &dev_attr_soft_rx_los) < 0) {
-        err_attr = "soft_rx_los";
+    if (device_create_file(device_p, &dev_attr_soft_rx_los_signal) < 0) {
+        err_attr = "soft_rx_los_signal";
         goto err_transvr_qsfp_attr;
     }
     if (device_create_file(device_p, &dev_attr_soft_tx_disable) < 0) {
@@ -2537,6 +2989,94 @@ register_transvr_qsfp_attr(struct device *device_p){
     }
     if (device_create_file(device_p, &dev_attr_soft_tx_fault) < 0) {
         err_attr = "soft_tx_fault";
+        goto err_transvr_qsfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_Page00) < 0) {
+        err_attr = "dev_attr_Page00";
+        goto err_transvr_qsfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_Page03) < 0) {
+        err_attr = "dev_attr_Page03";
+        goto err_transvr_qsfp_attr;
+    }
+	if (device_create_file(device_p, &dev_attr_temperature_high_alarm) < 0) {
+        err_attr = "dev_attr_temperature_high_alarm";
+        goto err_transvr_qsfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_temperature_low_alarm) < 0) {
+        err_attr = "dev_attr_temperature_low_alarm";
+        goto err_transvr_qsfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_voltage_high_alarm) < 0) {
+        err_attr = "dev_attr_voltage_high_alarm";
+        goto err_transvr_qsfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_voltage_low_alarm) < 0) {
+        err_attr = "dev_attr_voltage_low_alarm";
+        goto err_transvr_qsfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_bias_high_alarm) < 0) {
+        err_attr = "dev_attr_bias_high_alarm";
+        goto err_transvr_qsfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_bias_low_alarm) < 0) {
+        err_attr = "dev_attr_bias_low_alarm";
+        goto err_transvr_qsfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_rx_power_high_alarm) < 0) {
+        err_attr = "dev_attr_rx_power_high_alarm";
+        goto err_transvr_qsfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_rx_power_low_alarm) < 0) {
+        err_attr = "dev_attr_rx_power_low_alarm";
+        goto err_transvr_qsfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_tx_power_high_alarm) < 0) {
+        err_attr = "dev_attr_tx_power_high_alarm";
+        goto err_transvr_qsfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_tx_power_low_alarm) < 0) {
+        err_attr = "dev_attr_tx_power_low_alarm";
+        goto err_transvr_qsfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_temperature_high_threshold) < 0) {
+        err_attr = "dev_attr_temperature_high_threshold";
+        goto err_transvr_qsfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_temperature_low_threshold) < 0) {
+        err_attr = "dev_attr_temperature_low_threshold";
+        goto err_transvr_qsfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_voltage_high_threshold) < 0) {
+        err_attr = "dev_attr_voltage_high_threshold";
+        goto err_transvr_qsfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_voltage_low_threshold) < 0) {
+        err_attr = "dev_attr_voltage_low_threshold";
+        goto err_transvr_qsfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_bias_high_threshold) < 0) {
+        err_attr = "dev_attr_bias_high_threshold";
+        goto err_transvr_qsfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_bias_low_threshold) < 0) {
+        err_attr = "dev_attr_bias_low_threshold";
+        goto err_transvr_qsfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_rx_power_high_threshold) < 0) {
+        err_attr = "dev_attr_rx_power_high_threshold";
+        goto err_transvr_qsfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_rx_power_low_threshold) < 0) {
+        err_attr = "dev_attr_rx_power_low_threshold";
+        goto err_transvr_qsfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_tx_power_high_threshold) < 0) {
+        err_attr = "dev_attr_tx_power_high_threshold";
+        goto err_transvr_qsfp_attr;
+    }
+    if (device_create_file(device_p, &dev_attr_tx_power_low_threshold) < 0) {
+        err_attr = "dev_attr_tx_power_low_threshold";
         goto err_transvr_qsfp_attr;
     }
     return 0;
@@ -2615,12 +3155,12 @@ register_ioexp_attr_sfp_1(struct device *device_p){
            err_attr = "dev_attr_present";
         goto err_ioexp_sfp1_attr;
     }
-    if (device_create_file(device_p, &dev_attr_tx_fault) < 0) {
-        err_attr = "dev_attr_tx_fault";
+    if (device_create_file(device_p, &dev_attr_hard_tx_fault) < 0) {
+        err_attr = "dev_attr_hard_tx_fault";
         goto err_ioexp_sfp1_attr;
     }
-    if (device_create_file(device_p, &dev_attr_rxlos) < 0) {
-        err_attr = "dev_attr_rxlos";
+    if (device_create_file(device_p, &dev_attr_hard_rx_loss_signal) < 0) {
+        err_attr = "dev_attr_hard_rx_loss_signal";
         goto err_ioexp_sfp1_attr;
     }
     if (device_create_file(device_p, &dev_attr_tx_disable) < 0) {
