@@ -1,0 +1,455 @@
+From 2c733ce9f3f71a00763c4c9c8c617b6b7f6c0331 Mon Sep 17 00:00:00 2001
+From: James Huang <huang.james@inventec.com>
+Date: Thu, 24 Jan 2019 16:08:54 +0800
+Subject: [PATCH] Create the DDM alarm system integrated with SONiC
+
+---
+ sonic-xcvrd/scripts/xcvrd | 404 ++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 404 insertions(+)
+
+diff --git a/sonic-xcvrd/scripts/xcvrd b/sonic-xcvrd/scripts/xcvrd
+index 328d250..ede1c94 100644
+--- a/sonic-xcvrd/scripts/xcvrd
++++ b/sonic-xcvrd/scripts/xcvrd
+@@ -16,6 +16,7 @@ try:
+     import time
+     import threading
+     from swsscommon import swsscommon
++    from math import log10
+ except ImportError, e:
+     raise ImportError (str(e) + " - required module not found")
+ 
+@@ -64,6 +65,22 @@ BIAS_UNIT = 'mA'
+ # swps driver folder
+ SWPS_FOLDER = "/sys/class/swps/"
+ 
++PORT_NUM = 56
++SFP_PORT = 48
++QSFP_PORT = 8
++LANE = 4
++
++BiasHighAlarmList = [0] * (SFP_PORT + QSFP_PORT * LANE)
++BiasLowAlarmList = [0] * (SFP_PORT + QSFP_PORT * LANE)
++RXPowerHighAlarmList = [0] * (SFP_PORT + QSFP_PORT * LANE)
++RXPowerLowAlarmList = [0] * (SFP_PORT + QSFP_PORT * LANE)
++TXPowerHighAlarmList = [0] * (SFP_PORT + QSFP_PORT * LANE)
++TXPowerLowAlarmList = [0] * (SFP_PORT + QSFP_PORT * LANE)
++TempHighAlarmList = [0] * PORT_NUM
++TempLowAlarmList = [0] * PORT_NUM
++VoltageHighAlarmList = [0] * PORT_NUM
++VoltageLowAlarmList = [0] * PORT_NUM
++
+ #========================== Syslog wrappers ==========================
+ 
+ def log_info(msg, also_print_to_console=False):
+@@ -184,6 +201,10 @@ def logical_port_name_to_physical_port_list(port_name):
+     else:
+         return [int(port_name)]
+ 
++def physical_port_name_to_logical_port_list(port_name):
++    return platform_sfputil.get_physical_to_logical(port_name)[0]
++
++
+ # Returns,
+ #   port_num if physical
+ #   logical_port:port_num if logical port and is a ganged port
+@@ -426,6 +447,382 @@ def del_port_sfp_dom_info_to_db(logical_port_name, int_tbl, dom_tbl):
+             log_error("This functionality is currently not implemented for this platform")
+             sys.exit(3)
+ 
++def power_in_dbm_str(mW):
++    return "%.4f%s" % (mw_to_dbm(mW), "dBm")
++
++def mw_to_dbm(mW):
++    if mW == 0:
++        return float("-inf")
++    elif mW < 0:
++        return float("NaN")
++    return 10. * log10(mW)
++
++def get_eeprom_alarm(physical_port_id):
++    global BiasHighAlarmList
++    global BiasLowAlarmList
++    global RXPowerHighAlarmList
++    global RXPowerLowAlarmList
++    global TXPowerHighAlarmList
++    global TXPowerLowAlarmList
++    global TempHighAlarmList
++    global TempLowAlarmList
++    global VoltageHighAlarmList
++    global VoltageLowAlarmList
++
++    file_list = os.listdir(SWPS_FOLDER)
++    portname = "port{0}".format(physical_port_id)
++    if portname in os.listdir(SWPS_FOLDER):
++        path = "{0}{1}".format(SWPS_FOLDER, portname)
++
++    bias_high_alarm = open("{0}/bias_high_alarm".format(path), "r").read().strip()
++    bias_low_alarm = open("{0}/bias_low_alarm".format(path), "r").read().strip()
++    rx_power_high_alarm = open("{0}/rx_power_high_alarm".format(path), "r").read().strip()
++    rx_power_low_alarm = open("{0}/rx_power_low_alarm".format(path), "r").read().strip()
++    tx_power_high_alarm = open("{0}/tx_power_high_alarm".format(path), "r").read().strip()
++    tx_power_low_alarm = open("{0}/tx_power_low_alarm".format(path), "r").read().strip()
++    temperature_high_alarm = open("{0}/temperature_high_alarm".format(path), "r").read().strip()
++    temperature_low_alarm = open("{0}/temperature_low_alarm".format(path), "r").read().strip()
++    voltage_high_alarm = open("{0}/voltage_high_alarm".format(path), "r").read().strip()
++    voltage_low_alarm = open("{0}/voltage_low_alarm".format(path), "r").read().strip()
++
++    logical_port_list = platform_sfputil.logical
++    logical_port_name = physical_port_name_to_logical_port_list(physical_port_id)
++
++    #BiasHighAlarm
++    if bias_high_alarm != "-202" and bias_high_alarm != "-205":
++        bias_current = open("{0}/bias".format(path), "r").read().strip()
++        bias_high_threshold = open("{0}/bias_high_threshold".format(path), "r").read().strip()
++
++        if len(bias_high_alarm) == 1:
++            if bias_high_alarm == "1":
++		if BiasHighAlarmList[physical_port_id] == 0:
++		    BiasHighAlarmList[physical_port_id] = 1
++		    log_warning("{0} occurs BiasHighAlarm\n".format(logical_port_name))
++		    log_warning("Current Bias is {0}\n".format(bias_current))
++		    log_warning("BiasHighAlarm threshold is {0}\n".format(bias_high_threshold))
++	    else:
++		if BiasHighAlarmList[physical_port_id] == 1:
++		    BiasHighAlarmList[physical_port_id] = 0
++		    log_warning("{0} Bias returns to normal\n".format(logical_port_name))
++		    log_warning("Current Bias is {0}\n".format(bias_current))
++		    log_warning("BiasHighAlarm threshold is {0}\n".format(bias_high_threshold))
++        else:
++	    index = (physical_port_id - SFP_PORT) * LANE + SFP_PORT
++	    for line in open("{0}/bias_high_alarm".format(path), "r"):
++	        alarm = line.strip("\n").split(':')[1]
++	        num = line.split(':')[0].split('-')[1]
++		fp = open("{0}/bias".format(path), "r")
++		bias = fp.readlines()[int(num)-1].strip().split(':')[1]
++
++	        if alarm == "1":
++		    if BiasHighAlarmList[index] == 0:
++                        BiasHighAlarmList[index] = 1
++                        log_warning("{0} occurs BiasHighAlarm\n".format(logical_port_name))
++		        log_warning("Current Bias is {0} \n".format(bias))
++		        log_warning("BiasHighAlarm threshold is {0} \n".format(bias_high_threshold))
++		else:
++	            if BiasHighAlarmList[index] == 1:
++                        BiasHighAlarmList[index] = 0
++                        log_warning("{0} Bias returns to normal\n".format(logical_port_name))
++		        log_warning("Current Bias is {0} \n".format(bias))
++		        log_warning("BiasHighAlarm threshold is {0} \n".format(bias_high_threshold))
++
++		index = index + 1
++
++    #BiasLowAlarm
++    if bias_low_alarm != "-202" and bias_low_alarm != "-205":
++        bias_current = open("{0}/bias".format(path), "r").read().strip()
++        bias_low_threshold = open("{0}/bias_low_threshold".format(path), "r").read().strip()
++
++        if len(bias_low_alarm) == 1:
++            if bias_low_alarm == "1":
++		if BiasLowAlarmList[physical_port_id] == 0:
++                    BiasLowAlarmList[physical_port_id] = 1
++                    log_warning("{0} occurs BiasLowAlarm\n".format(logical_port_name))
++                    log_warning("Current Bias is {0}\n".format(bias_current))
++                    log_warning("BiasLowAlarm threshold is {0}\n".format(bias_low_threshold))
++            else:
++                if BiasLowAlarmList[physical_port_id] == 1:
++                    BiasLowAlarmList[physical_port_id] = 0
++                    log_warning("{0} Bias returns to normal\n".format(logical_port_name))
++                    log_warning("Current Bias is {0}\n".format(bias_current))
++                    log_warning("BiasLowAlarm threshold is {0}\n".format(bias_low_threshold))
++        else:
++	    index = (physical_port_id - SFP_PORT) * LANE + SFP_PORT
++            for line in open("{0}/bias_low_alarm".format(path), "r"):
++                alarm = line.strip("\n").split(':')[1]
++                num = line.split(':')[0].split('-')[1]
++                fp = open("{0}/bias".format(path), "r")
++                bias = fp.readlines()[int(num)-1].strip().split(':')[1]
++
++                if alarm == "1":
++                    if BiasLowAlarmList[index] == 0:
++                        BiasLowAlarmList[index] = 1
++                        log_warning("{0} occurs BiasLowAlarm\n".format(logical_port_name))
++                        log_warning("Current Bias is {0} \n".format(bias))
++                        log_warning("BiasLowAlarm threshold is {0} \n".format(bias_low_threshold))
++                else:
++                    if BiasLowAlarmList[index] == 1:
++                        BiasLowAlarmList[index] = 0
++                        log_warning("{0} Bias returns to normal\n".format(logical_port_name))
++                        log_warning("Current Bias is {0} \n".format(bias))
++                        log_warning("BiasLowAlarm threshold is {0} \n".format(bias_low_threshold))
++
++		index = index + 1
++
++    #RXPowerHighAlarm
++    if rx_power_high_alarm != "-202" and rx_power_high_alarm != "-205":
++        rx_power_current = open("{0}/rx_power".format(path), "r").read().strip()
++        rx_power_high_threshold = open("{0}/rx_power_high_threshold".format(path), "r").read().strip()
++	rx_power_high_threshold = power_in_dbm_str(float(rx_power_high_threshold))
++
++        if len(rx_power_high_alarm) == 1:
++	    rx_power_current = power_in_dbm_str(float(rx_power_current))
++
++            if rx_power_high_alarm == "1":
++		if RXPowerHighAlarmList[physical_port_id] == 0:
++                    RXPowerHighAlarmList[physical_port_id] = 1
++		    log_warning("{0} occurs RXPowerHighAlarm\n".format(logical_port_name))
++		    log_warning("Current RX Power is {0}\n".format(rx_power_current))
++		    log_warning("RXPowerHighAlarm threshold is {0}\n".format(rx_power_high_threshold))
++	    else:
++		if RXPowerHighAlarmList[physical_port_id] == 1:
++                    RXPowerHighAlarmList[physical_port_id] = 0
++                    log_warning("{0} RXPower returns to normal\n".format(logical_port_name))
++                    log_warning("Current RX Power is {0}\n".format(rx_power_current))
++                    log_warning("RXPowerHighAlarm threshold is {0}\n".format(rx_power_high_threshold))
++        else:
++	    index = (physical_port_id - SFP_PORT) * LANE + SFP_PORT
++	    for line in open("{0}/rx_power_high_alarm".format(path), "r"):
++	        alarm = line.strip("\n").split(':')[1]
++	        num = line.split(':')[0].split('-')[1]
++		fp = open("{0}/rx_power".format(path), "r")
++		rx_power = fp.readlines()[int(num)-1].strip().split(':')[1]
++		rx_power = power_in_dbm_str(float(rx_power))
++
++	        if alarm == "1":
++		    if RXPowerHighAlarmList[index] == 0:
++                        RXPowerHighAlarmList[index] = 1
++		        log_warning("{0} RX Power {1} occurs RXPowerHighAlarm\n".format(logical_port_name, num))
++		        log_warning("Current RX Power is {0} \n".format(rx_power))
++		        log_warning("RXPowerHighAlarm threshold is {0} \n".format(rx_power_high_threshold))
++		else:
++		    if RXPowerHighAlarmList[index] == 1:
++                        RXPowerHighAlarmList[index] = 0
++			log_warning("{0} RX Power {1} returns to normal\n".format(logical_port_name, num))
++                        log_warning("Current RX Power is {0} \n".format(rx_power))
++                        log_warning("RXPowerHighAlarm threshold is {0} \n".format(rx_power_high_threshold))
++
++		index = index + 1
++
++    #RXPowerLowAlarm
++    if rx_power_low_alarm != "-202" and rx_power_low_alarm != "-205":
++        rx_power_current = open("{0}/rx_power".format(path), "r").read().strip()
++        rx_power_low_threshold = open("{0}/rx_power_low_threshold".format(path), "r").read().strip()
++	rx_power_low_threshold = power_in_dbm_str(float(rx_power_low_threshold))
++
++        if len(rx_power_low_alarm) == 1:
++	    rx_power_current = power_in_dbm_str(float(rx_power_current))
++
++	    if rx_power_low_alarm == "1":
++		if RXPowerLowAlarmList[physical_port_id] == 0:
++                    RXPowerLowAlarmList[physical_port_id] = 1
++                    log_warning("{0} occurs RXPowerLowAlarm\n".format(logical_port_name))
++	            log_warning("Current RX Power is {0}\n".format(rx_power_current))
++	            log_warning("RXPowerLowAlarm threshold is {0}\n".format(rx_power_low_threshold))
++	    else:
++	        if RXPowerLowAlarmList[physical_port_id] == 1:
++                    RXPowerLowAlarmList[physical_port_id] = 0
++		    log_warning("{0} RXPower returns to normal\n".format(logical_port_name))
++                    log_warning("Current RX Power is {0}\n".format(rx_power_current))
++                    log_warning("RXPowerLowAlarm threshold is {0}\n".format(rx_power_low_threshold))
++
++        else:
++	    index = (physical_port_id - SFP_PORT) * LANE + SFP_PORT
++	    for line in open("{0}/rx_power_low_alarm".format(path), "r"):
++	        alarm = line.strip("\n").split(':')[1]
++	        num = line.split(':')[0].split('-')[1]
++		fp = open("{0}/rx_power".format(path), "r")
++		rx_power = fp.readlines()[int(num)-1].strip().split(':')[1]
++		rx_power = power_in_dbm_str(float(rx_power))
++
++	        if alarm == "1":
++                    if RXPowerLowAlarmList[index] == 0:
++                        RXPowerLowAlarmList[index] = 1
++		        log_warning("{0} RX Power {1} occurs RXPowerLowAlarm\n".format(logical_port_name, num))
++		        log_warning("Current RX Power is {0} \n".format(rx_power))
++		        log_warning("RXPowerLowAlarm threshold is {0} \n".format(rx_power_low_threshold))
++		else:
++		    if RXPowerLowAlarmList[index] == 1:
++                        RXPowerLowAlarmList[index] = 0
++                        log_warning("{0} RX Power {1} returns to normal\n".format(logical_port_name, num))
++                        log_warning("Current RX Power is {0} \n".format(rx_power))
++                        log_warning("RXPowerLowAlarm threshold is {0} \n".format(rx_power_low_threshold))
++
++		index = index + 1
++
++    #TXPowerHighAlarm
++    if tx_power_high_alarm != "-202" and tx_power_high_alarm != "-205":
++	tx_power_current = open("{0}/tx_power".format(path), "r").read().strip()
++        tx_power_high_threshold = open("{0}/tx_power_high_threshold".format(path), "r").read().strip()
++        tx_power_high_threshold = power_in_dbm_str(float(tx_power_high_threshold))
++
++        if len(tx_power_high_alarm) == 1:
++            if tx_power_high_alarm == "1":
++                tx_power_current = power_in_dbm_str(float(tx_power_current))
++
++                if TXPowerHighAlarmList[physical_port_id] == 0:
++                    TXPowerHighAlarmList[physical_port_id] = 1
++                    log_warning("{0} occurs TXPowerHighAlarm\n".format(logical_port_name))
++                    log_warning("Current TX Power is {0}\n".format(tx_power_current))
++                    log_warning("TXPowerHighAlarm threshold is {0}\n".format(tx_power_high_threshold))
++            else:
++                if TXPowerHighAlarmList[physical_port_id] == 1:
++                    TXPowerHighAlarmList[physical_port_id] = 0
++                    log_warning("{0} TXPower returns to normal\n".format(logical_port_name))
++                    log_warning("Current TX Power is {0}\n".format(tx_power_current))
++                    log_warning("TXPowerHighAlarm threshold is {0}\n".format(tx_power_high_threshold))
++        else:
++	    index = (physical_port_id - SFP_PORT) * LANE + SFP_PORT
++            for line in open("{0}/tx_power_high_alarm".format(path), "r"):
++                alarm = line.strip("\n").split(':')[1]
++                num = line.split(':')[0].split('-')[1]
++                fp = open("{0}/tx_power".format(path), "r")
++                tx_power = fp.readlines()[int(num)-1].strip().split(':')[1]
++                tx_power = power_in_dbm_str(float(tx_power))
++
++                if alarm == "1":
++                    if TXPowerHighAlarmList[index] == 0:
++                        TXPowerHighAlarmList[index] = 1
++                        log_warning("{0} TX Power {1} occurs TXPowerHighAlarm\n".format(logical_port_name, num))
++                        log_warning("Current TX Power is {0} \n".format(tx_power))
++                        log_warning("TXPowerHighAlarm threshold is {0} \n".format(tx_power_high_threshold))
++                else:
++                    if TXPowerHighAlarmList[index] == 1:
++                        TXPowerHighAlarmList[index] = 0
++                        log_warning("{0} TX Power {1} returns to normal\n".format(logical_port_name, num))
++                        log_warning("Current TX Power is {0} \n".format(tx_power))
++                        log_warning("TXPowerHighAlarm threshold is {0} \n".format(tx_power_high_threshold))
++
++		index = index + 1
++
++    #TXPowerLowAlarm
++    if tx_power_low_alarm != "-202" and tx_power_low_alarm != "-205":
++        tx_power_current = open("{0}/tx_power".format(path), "r").read().strip()
++        tx_power_low_threshold = open("{0}/tx_power_low_threshold".format(path), "r").read().strip()
++	tx_power_low_threshold = power_in_dbm_str(float(tx_power_low_threshold))
++
++	if len(tx_power_low_alarm) == 1:
++            if tx_power_low_alarm == "1":
++                tx_power_current = power_in_dbm_str(float(tx_power_current))
++
++                if TXPowerLowAlarmList[physical_port_id] == 0:
++                    TXPowerLowAlarmList[physical_port_id] = 1
++                    log_warning("{0} occurs TXPowerLowAlarm\n".format(logical_port_name))
++                    log_warning("Current TX Power is {0}\n".format(tx_power_current))
++                    log_warning("TXPowerLowAlarm threshold is {0}\n".format(tx_power_low_threshold))
++            else:
++                if TXPowerLowAlarmList[physical_port_id] == 1:
++                    TXPowerLowAlarmList[physical_port_id] = 0
++                    log_warning("{0} TXPower returns to normal\n".format(logical_port_name))
++                    log_warning("Current TX Power is {0}\n".format(tx_power_current))
++                    log_warning("TXPowerLowAlarm threshold is {0}\n".format(tx_power_low_threshold))
++        else:
++	    index = (physical_port_id - SFP_PORT) * LANE + SFP_PORT
++            for line in open("{0}/tx_power_low_alarm".format(path), "r"):
++                alarm = line.strip("\n").split(':')[1]
++                num = line.split(':')[0].split('-')[1]
++                fp = open("{0}/tx_power".format(path), "r")
++                tx_power = fp.readlines()[int(num)-1].strip().split(':')[1]
++                tx_power = power_in_dbm_str(float(tx_power))
++
++                if alarm == "1":
++                    if TXPowerLowAlarmList[index] == 0:
++                        TXPowerLowAlarmList[index] = 1
++                        log_warning("{0} TX Power {1} occurs TXPowerLowAlarm\n".format(logical_port_name, num))
++                        log_warning("Current TX Power is {0} \n".format(tx_power))
++                        log_warning("TXPowerLowAlarm threshold is {0} \n".format(tx_power_low_threshold))
++                else:
++                    if TXPowerLowAlarmList[physical_port_id] == 1:
++                        TXPowerLowAlarmList[physical_port_id] = 0
++                        log_warning("{0} TX Power {1} returns to normal\n".format(logical_port_name, num))
++                        log_warning("Current TX Power is {0} \n".format(tx_power))
++                        log_warning("TXPowerLowAlarm threshold is {0} \n".format(tx_power_low_threshold))
++
++		index = index + 1
++
++    #TempHighAlarm
++    if temperature_high_alarm != "-202" and tx_power_high_alarm != "-205":
++        temperature_current = open("{0}/temperature".format(path), "r").read().strip()
++        temperature_high_threshold = open("{0}/temperature_high_threshold".format(path), "r").read().strip()
++
++        if temperature_high_alarm == "1":
++            if TempHighAlarmList[physical_port_id] == 0:
++                TempHighAlarmList[physical_port_id] = 1
++	        log_warning("{0} occurs TempHighAlarm\n".format(logical_port_name))
++	        log_warning("Current temperature is {0}\n".format(temperature_current))
++	        log_warning("TempHighAlarm threshold is {0}\n".format(temperature_high_threshold))
++	else:
++	    if BiasHighAlarmList[physical_port_id] == 1:
++                BiasHighAlarmList[physical_port_id] = 0
++                log_warning("{0} Temperature returns to normal\n".format(logical_port_name))
++                log_warning("Current temperature is {0}\n".format(temperature_current))
++                log_warning("TempHighAlarm threshold is {0}\n".format(temperature_high_threshold))
++
++    #TempLowAlarm
++    if temperature_low_alarm != "-202" and temperature_low_alarm != "-205":
++        temperature_current = open("{0}/temperature".format(path), "r").read().strip()
++        temperature_low_threshold = open("{0}/temperature_low_threshold".format(path), "r").read().strip()
++
++        if temperature_low_alarm == "1":
++            if TempLowAlarmList[physical_port_id] == 0:
++                TempLowAlarmList[physical_port_id] = 1
++                log_warning("{0} occurs TempLowAlarm\n".format(logical_port_name))
++                log_warning("Current temperature is {0}\n".format(temperature_current))
++                log_warning("TempLowAlarm threshold is {0}\n".format(temperature_low_threshold))
++	else:
++	    if TempLowAlarmList[physical_port_id] == 1:
++                TempLowAlarmList[physical_port_id] = 0
++                log_warning("{0} Temperature returns to normal\n".format(logical_port_name))
++                log_warning("Current temperature is {0}\n".format(temperature_current))
++                log_warning("TempLowAlarm threshold is {0}\n".format(temperature_low_threshold))
++
++    #VoltageHighAlarm
++    if voltage_high_alarm != "-202" and voltage_high_alarm != "-205":
++        voltage_current = open("{0}/voltage".format(path), "r").read().strip()
++        voltage_high_threshold = open("{0}/voltage_high_threshold".format(path), "r").read().strip()
++
++        if voltage_high_alarm == "1":
++	    if VoltageHighAlarmList[physical_port_id] == 0:
++                VoltageHighAlarmList[physical_port_id] = 1
++                log_warning("{0} occurs VoltageHighAlarm\n".format(logical_port_name))
++                log_warning("Current voltage is {0}\n".format(voltage_current))
++                log_warning("VoltageHighAlarm threshold is {0}\n".format(voltage_high_threshold))
++	else:
++	    if VoltageHighAlarmList[physical_port_id] == 1:
++                VoltageHighAlarmList[physical_port_id] = 0
++		log_warning("{0} Voltage returns to normal\n".format(logical_port_name))
++                log_warning("Current voltage is {0}\n".format(voltage_current))
++                log_warning("VoltageHighAlarm threshold is {0}\n".format(voltage_high_threshold))
++
++    #VoltageLowAlarm
++    if voltage_low_alarm != "-202" and voltage_low_alarm != "-205":
++        voltage_current = open("{0}/voltage".format(path), "r").read().strip()
++        voltage_low_threshold = open("{0}/voltage_low_threshold".format(path), "r").read().strip()
++
++        if voltage_low_alarm == "1":
++	    if VoltageLowAlarmList[physical_port_id] == 0:
++                VoltageLowAlarmList[physical_port_id] = 1
++                log_warning("{0} occurs VoltageLowAlarm\n".format(logical_port_name))
++                log_warning("Current voltage is {0}\n".format(voltage_current))
++                log_warning("VoltageLowAlarm threshold is {0}\n".format(voltage_low_threshold))
++	else:
++	    if VoltageLowAlarmList[physical_port_id] == 1:
++                VoltageLowAlarmList[physical_port_id] = 0
++		log_warning("{0} Voltage returns to normal\n".format(logical_port_name))
++                log_warning("Current voltage is {0}\n".format(voltage_current))
++                log_warning("VoltageHighAlarm threshold is {0}\n".format(voltage_low_threshold))
++
+ # Timer thread wrapper class to update dom info to DB periodically
+ class dom_info_update_task:
+     def __init__(self, table):
+@@ -442,6 +839,13 @@ class dom_info_update_task:
+         for logical_port_name in logical_port_list:
+             post_port_dom_info_to_db(logical_port_name, self.dom_table)
+ 
++	    physical_port_list = logical_port_name_to_physical_port_list(logical_port_name)
++            for physical_port in physical_port_list:
++                if not platform_sfputil.get_presence(physical_port):
++                    continue
++
++                get_eeprom_alarm(physical_port)
++
+         self.task_timer = threading.Timer(DOM_INFO_UPDATE_PERIOD_SECS, self.task_run)
+         self.task_timer.start()
+ 
+-- 
+2.1.4
+
