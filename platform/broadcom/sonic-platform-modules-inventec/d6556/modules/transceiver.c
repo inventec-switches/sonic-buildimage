@@ -2822,7 +2822,7 @@ sfp_get_transvr_rx_power(struct transvr_obj_s *self,
     }
     /* Return Unit: 1 mW */
     return _common_count_rx_power(self->curr_rx_power[0],
-                                  self->curr_rx_power[0],
+                                  self->curr_rx_power[1],
                                   buf_p);
 }
 
@@ -3600,7 +3600,7 @@ sfp_get_rx_power_high_alarm_threshold(struct transvr_obj_s *self,
     }
     /* Return Unit: 1 mW */
     return _common_count_rx_power(self->rx_power_high_alarm_threshold[0],
-                                  self->rx_power_high_alarm_threshold[0],
+                                  self->rx_power_high_alarm_threshold[1],
                                   buf_p);
 }
 
@@ -3622,7 +3622,7 @@ sfp_get_rx_power_low_alarm_threshold(struct transvr_obj_s *self,
     }
     /* Return Unit: 1 mW */
     return _common_count_rx_power(self->rx_power_low_alarm_threshold[0],
-                                  self->rx_power_low_alarm_threshold[0],
+                                  self->rx_power_low_alarm_threshold[1],
                                   buf_p);
 }
 
@@ -4079,31 +4079,6 @@ _qsfp_get_channel_diag(uint8_t *data_array,
                     ch_name, 2, ch_buf[1],
                     ch_name, 3, ch_buf[2],
                     ch_name, 4, ch_buf[3]);
-}
-
-int
-_qsfp_get_channel_diag_threshold(uint8_t *data_array,
-                       int (*count_func)(uint8_t high_byte, uint8_t low_byte, char *buf_p),
-                       char *ch_name,
-                       char *result_p) {
-    int i, high, low;
-    int len_max = 128;
-    char ch_buf[4][16] = { DEBUG_TRANSVR_STR_VAL,
-                           DEBUG_TRANSVR_STR_VAL,
-                           DEBUG_TRANSVR_STR_VAL,
-                           DEBUG_TRANSVR_STR_VAL };
-
-    for (i=0; i<4; i++) {
-        high = (i*2);
-        low  = ((i*2) + 1);
-        count_func(data_array[high], data_array[low], ch_buf[i]);
-    }
-    return snprintf(result_p, len_max,
-                    "%s-%d:%s%s-%d:%s%s-%d:%s%s-%d:%s",
-                    ch_name, 1, ch_buf[0],
-                    ch_name, 2, ch_buf[0],
-                    ch_name, 3, ch_buf[0],
-                    ch_name, 4, ch_buf[0]);
 }
 
 int

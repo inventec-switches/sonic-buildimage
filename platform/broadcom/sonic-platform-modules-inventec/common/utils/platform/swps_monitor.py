@@ -38,6 +38,7 @@ INV_REDWOOD_PLATFORM = "SONiC-Inventec-d7032-100"
 INV_CYPRESS_PLATFORM = "SONiC-Inventec-d7054"
 INV_SEQUOIA_PLATFORM = "SONiC-Inventec-d7264"
 INV_MAPLE_PLATFORM = "SONiC-Inventec-d6556"
+INV_MAPLE_EVT1_PLATFORM = "SONiC-Inventec-d6556evt1"
 INV_MAGNOLIA_PLATFORM = "SONiC-Inventec-d6254qs"
 
 NETLINK_KOBJECT_UEVENT = 15
@@ -46,7 +47,7 @@ SWPS_PATH = "/sys/class/swps"
 
 
 def log_message( level, string ):
-    syslog.openlog("transceiver_monitor", syslog.LOG_PID, facility=syslog.LOG_DAEMON)
+    syslog.openlog("swps_monitor", syslog.LOG_PID, facility=syslog.LOG_DAEMON)
     syslog.syslog( level, string )
 
 class PortUtil(bcmshell):
@@ -83,7 +84,7 @@ class PortUtil(bcmshell):
                 self.eagle_list = [66,100]
             elif name == INV_SEQUOIA_PLATFORM:
                 self.eagle_list = [66,100]
-            elif name == INV_MAPLE_PLATFORM:
+            elif name == INV_MAPLE_PLATFORM or name == INV_MAPLE_EVT1_PLATFORM:
                 self.eagle_list = [66,130]
             else:
                 self.eagle_list = []
@@ -215,30 +216,29 @@ def main():
             if event['SUBSYSTEM'] == 'swps':
                 #print('SWPS event. From %s, ACTION %s, IF_TYPE %s, IF_LANE %s' % (event['DEVPATH'], event['ACTION'], event['IF_TYPE'], event['IF_LANE']))
                 portname = event['DEVPATH'].split("/")[-1]
-                try:
-                    if port_obj.get_platform() == INV_SEQUOIA_PLATFORM :
-                        pass
-                    elif port_obj.get_platform() == INV_MAPLE_PLATFORM :
-                        port_obj.parsing_port_list()  
-                        with open('/sys/class/swps/{0}/info'.format(portname),'r') as f:
-                            info = f.read()
-                        # The info of DAC caple is head with 28. if insert DAC, we need to enable AN feature.
-                        if info is not None and info[0:2] == "28" :
-                            port_obj.execute_command( "port {0} an=1 speed={1}".format( port_obj.port_to_bcm_mapping[portname]["bcm_name"], port_obj.port_to_bcm_mapping[portname]["speed"] ) )
+                if event['ACTION'] == "add" :
+                    try:
+                        if port_obj.get_platform() == INV_SEQUOIA_PLATFORM :
+                            pass
+                        elif port_obj.get_platform() == INV_MAPLE_PLATFORM or port_obj.get_platform() == INV_MAPLE_EVT1_PLATFORM:
+                            port_obj.parsing_port_list()
+                            with open('/sys/class/swps/{0}/info'.format(portname),'r') as f:
+                                info = f.read()
+                            # The info of DAC caple is head with 28. if insert DAC, we need to enable AN feature.
+                            if info is not None and info[0:2] == "28" :
+                                port_obj.execute_command( "port {0} an=1 speed={1}".format( port_obj.port_to_bcm_mapping[portname]["bcm_name"], port_obj.port_to_bcm_mapping[portname]["speed"] ) )
+                            else:
+                                if port_obj.port_to_bcm_mapping[portname]["speed"] == 100000 :
+                                    port_obj.execute_command( "port {0} an=0 if=CR4 speed={1}".format( port_obj.port_to_bcm_mapping[portname]["bcm_name"], port_obj.port_to_bcm_mapping[portname]["speed"] ) )
+                                elif port_obj.port_to_bcm_mapping[portname]["speed"] == 25000 :
+                                    port_obj.execute_command( "port {0} an=0 if=CR speed={1}".format( port_obj.port_to_bcm_mapping[portname]["bcm_name"], port_obj.port_to_bcm_mapping[portname]["speed"] ) )
+                                else:
+                                    port_obj.execute_command( "port {0} an=0 speed={1}".format(port_obj.port_to_bcm_mapping[portname]["bcm_name"],port_obj.port_to_bcm_mapping[portname]["speed"] ))
                         else:
-                            if port_obj.port_to_bcm_mapping[portname]["speed"] == 100000 :
-                                port_obj.execute_command( "port {0} an=0 if=CR4 speed={1}".format( port_obj.port_to_bcm_mapping[portname]["bcm_name"], port_obj.port_to_bcm_mapping[portname]["speed"] ) )
-                            else :
-                                port_obj.execute_command( "port {0} an=0 if=CR speed={1}".format( port_obj.port_to_bcm_mapping[portname]["bcm_name"], port_obj.port_to_bcm_mapping[portname]["speed"] ) )
-                    else:
-                        port_obj.execute_command( "port {0} if={1}".format( port_obj.port_to_bcm_mapping[portname]["bcm_name"], event['IF_TYPE'] ) )
-                except Exception, e:
-                        log_message( syslog.LOG_WARNING, "Exception. The warning is {0}".format(str(e)) )
-                        raise Exception("[swps_monitor.py] Exception. The warning is {0}".format(str(e)) )
+                            port_obj.execute_command( "port {0} if={1}".format( port_obj.port_to_bcm_mapping[portname]["bcm_name"], event['IF_TYPE'] ) )
+                    except Exception, e:
+                            log_message( syslog.LOG_WARNING, "Exception. The warning is {0}".format(str(e)) )
+                            raise Exception("[swps_monitor.py] Exception. The warning is {0}".format(str(e)) )
                 
 if __name__ == "__main__":
     main()
-    
-
-
-
