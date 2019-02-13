@@ -30,11 +30,12 @@ except ImportError as e:
     raise ImportError("%s - required module not found" % str(e))
 
 args = []
-INV_REDWOOD_PLATFORM  = "x86_64-inventec_d7032q28b-r0"
-INV_CYPRESS_PLATFORM  = "x86_64-inventec_d7054q28b-r0"
-INV_SEQUOIA_PLATFORM  = "x86_64-inventec_d7264q28b-r0"
-INV_MAPLE_PLATFORM    = "x86_64-inventec_d6556-r0"
-INV_MAGNOLIA_PLATFORM = "x86_64-inventec_d6254qs-r0"
+INV_REDWOOD_PLATFORM      = "x86_64-inventec_d7032q28b-r0"
+INV_CYPRESS_PLATFORM      = "x86_64-inventec_d7054q28b-r0"
+INV_SEQUOIA_PLATFORM      = "x86_64-inventec_d7264q28b-r0"
+INV_MAPLE_PLATFORM        = "x86_64-inventec_d6356-r0"
+INV_MAPLE_EVT1_PLATFORM   = "x86_64-inventec_d6556-r0"
+INV_MAGNOLIA_PLATFORM     = "x86_64-inventec_d6254qs-r0"
 
 PSOC_NAME = "name"
 HWMON_PATH = "/sys/class/hwmon"

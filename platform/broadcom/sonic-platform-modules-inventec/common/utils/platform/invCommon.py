@@ -9,7 +9,8 @@ class InvPlatform():
     inv_magnolia        = "x86_64-inventec_d6254qs-r0"
     inv_redwood         = "x86_64-inventec_d7032q28b-r0"
     inv_cypress         = "x86_64-inventec_d7054q28b-r0"
-    inv_maple           = "x86_64-inventec_d6556-r0"
+    inv_maple           = "x86_64-inventec_d6356-r0"
+    inv_maple_evt1      = "x86_64-inventec_d6556-r0"
     inv_sequoia         = "x86_64-inventec_d7264q28b-r0"
 
 

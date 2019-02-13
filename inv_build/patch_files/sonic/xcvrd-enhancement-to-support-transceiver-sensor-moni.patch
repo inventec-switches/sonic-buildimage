@@ -1,14 +1,103 @@
-From 68aa681875c31d11bdd3a71c961e2b7ed906e409 Mon Sep 17 00:00:00 2001
-From: James Huang <huang.james@inventec.com>
-Date: Thu, 8 Nov 2018 19:31:18 +0800
+From 1ee90b40a6b80dc0062822cbcf7cac40671f3977 Mon Sep 17 00:00:00 2001
+From: alvin lin <lin.alvin@inventec.com>
+Date: Tue, 12 Feb 2019 16:54:14 +0800
 Subject: [PATCH] [xcvrd]enhancement to support transceiver sensor monitoring
 
 ---
+ .../x86_64-inventec_d6356-r0/plugins/sfputil.py    | 69 ++++++++++++++++++++--
  .../x86_64-inventec_d6556-r0/plugins/sfputil.py    | 69 ++++++++++++++++++++--
  .../plugins/sfputil.py                             | 69 ++++++++++++++++++++--
  .../plugins/sfputil.py                             | 69 ++++++++++++++++++++--
- 3 files changed, 195 insertions(+), 12 deletions(-)
+ 4 files changed, 260 insertions(+), 16 deletions(-)
 
+diff --git a/device/inventec/x86_64-inventec_d6356-r0/plugins/sfputil.py b/device/inventec/x86_64-inventec_d6356-r0/plugins/sfputil.py
+index 5ea81ff..e275b94 100755
+--- a/device/inventec/x86_64-inventec_d6356-r0/plugins/sfputil.py
++++ b/device/inventec/x86_64-inventec_d6356-r0/plugins/sfputil.py
+@@ -5,10 +5,59 @@
+ 
+ try:
+     import time
++    import socket, re,os
++    from collections import OrderedDict
+     from sonic_sfp.sfputilbase import SfpUtilBase
+ except ImportError as e:
+     raise ImportError("%s - required module not found" % str(e))
+ 
++NETLINK_KOBJECT_UEVENT = 15
++monitor = None
++
++class SWPSEventMonitor(object):
++
++    def __init__(self):
++        self.recieved_events = OrderedDict()
++        self.socket = socket.socket(
++            socket.AF_NETLINK, socket.SOCK_DGRAM, NETLINK_KOBJECT_UEVENT)
++
++    def start(self):
++        self.socket.bind((os.getpid(), -1))
++
++    def stop(self):
++        self.socket.close()
++
++    def __enter__(self):
++        self.start()
++        return self
++
++    def __exit__(self, exc_type, exc_value, traceback):
++        self.stop()
++
++    def __iter__(self):
++        global monitor
++        while True:
++            for item in monitor.next_events():
++                yield item
++
++    def next_events(self):
++        data = self.socket.recv(16384)
++        event = {}
++        for item in data.split(b'\x00'):
++            if not item:
++                # check if we have an event and if we already received it
++                if event and event['SEQNUM'] not in self.recieved_events:
++                    self.recieved_events[event['SEQNUM']] = None
++                    if (len(self.recieved_events) > 100):
++                        self.recieved_events.popitem(last=False)
++                    yield event
++                event = {}
++            else:
++                try:
++                    k, v = item.split(b'=', 1)
++                    event[k.decode('ascii')] = v.decode('ascii')
++                except ValueError:
++                    pass
+ 
+ class SfpUtil(SfpUtilBase):
+     """Platform-specific SfpUtil class"""
+@@ -211,7 +260,19 @@ class SfpUtil(SfpUtilBase):
+         return True
+ 
+     def get_transceiver_change_event(self):
+-        """
+-        TODO: This function need to be implemented
+-        """
+-        raise NotImplementedError
++
++        global monitor
++        port_dict = {}
++        with SWPSEventMonitor() as monitor:
++            for event in monitor:
++                if event['SUBSYSTEM'] == 'swps':
++                    #print('SWPS event. From %s, ACTION %s, IF_TYPE %s, IF_LANE %s' % (event['DEVPATH'], event['ACTION'], event['IF_TYPE'], event['IF_LANE']))
++                    portname = event['DEVPATH'].split("/")[-1]
++                    rc = re.match(r"port(?P<num>\d+)",portname)
++                    if rc is not None:
++                        if event['ACTION'] == "remove":
++                            port_dict[rc.group("num")] = "0"
++                        if event['ACTION'] == "add":
++                            port_dict[rc.group("num")] = "1"
++                        return True, port_dict
++                    return False, {}
 diff --git a/device/inventec/x86_64-inventec_d6556-r0/plugins/sfputil.py b/device/inventec/x86_64-inventec_d6556-r0/plugins/sfputil.py
 index d353fb7..d1df26d 100755
 --- a/device/inventec/x86_64-inventec_d6556-r0/plugins/sfputil.py

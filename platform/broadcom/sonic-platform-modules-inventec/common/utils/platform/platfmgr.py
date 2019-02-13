@@ -38,7 +38,8 @@ BCMSHELLTIMECHECK       = 5
 INV_MAGNOLIA            = "x86_64-inventec_d6254qs-r0"
 INV_REDWOOD             = "x86_64-inventec_d7032q28b-r0"
 INV_CYPRESS             = "x86_64-inventec_d7054q28b-r0"
-INV_MAPLE               = "x86_64-inventec_d6556-r0"
+INV_MAPLE               = "x86_64-inventec_d6356-r0"
+INV_MAPLE_EVT1          = "x86_64-inventec_d6556-r0"
 INV_SEQUOIA             = "x86_64-inventec_d7264q28b-r0"
 
 #define daemon
@@ -130,6 +131,16 @@ def platform_path_init():
     elif platformName.rstrip() == INV_MAPLE:
         msg_to_syslog('info', "found platform: {0}".format(INV_MAPLE))
         PLATFROM        = INV_MAPLE
+        BASE_PATH       = '/usr/share/sonic/device/{0}/plugins'.format(PLATFROM)
+        ASIC_DAEMON     = '{0}/asic_monitor.py'.format(BASE_PATH)
+        ASIC_PIDFILE    = '{0}/asic_monitor'.format(PID_PATH)
+        LED_DAEMON      = '{0}/led_proc.py'.format(BASE_PATH)
+        LED_PIDFILE     = '{0}/led_proc'.format(PID_PATH)
+        SWPS_DAEMON     = '{0}/swps_monitor.py'.format(BASE_PATH)
+        SWPS_PIDFILE    = '{0}/swps_monitor'.format(PID_PATH)
+    elif platformName.rstrip() == INV_MAPLE_EVT1:
+        msg_to_syslog('info', "found platform: {0}".format(INV_MAPLE_EVT1))
+        PLATFROM        = INV_MAPLE_EVT1
         BASE_PATH       = '/usr/share/sonic/device/{0}/plugins'.format(PLATFROM)
         ASIC_DAEMON     = '{0}/asic_monitor.py'.format(BASE_PATH)
         ASIC_PIDFILE    = '{0}/asic_monitor'.format(PID_PATH)

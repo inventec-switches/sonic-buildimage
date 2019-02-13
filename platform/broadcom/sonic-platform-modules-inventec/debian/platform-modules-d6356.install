@@ -1,0 +1,2 @@
+d6356/utils/inventec_d6356_util.py              /usr/local/bin
+common/utils/platform/*.py                      /usr/share/sonic/device/x86_64-inventec_d6356-r0/plugins

@@ -34,11 +34,12 @@ except ImportError as e:
 
 DEBUG = False
 args = []
-INV_REDWOOD_PLATFORM = "SONiC-Inventec-d7032-100"
-INV_CYPRESS_PLATFORM = "SONiC-Inventec-d7054"
-INV_SEQUOIA_PLATFORM = "SONiC-Inventec-d7264"
-INV_MAPLE_PLATFORM = "SONiC-Inventec-d6556"
-INV_MAGNOLIA_PLATFORM = "SONiC-Inventec-d6254qs"
+INV_REDWOOD_PLATFORM     = "SONiC-Inventec-d7032-100"
+INV_CYPRESS_PLATFORM     = "SONiC-Inventec-d7054"
+INV_SEQUOIA_PLATFORM     = "SONiC-Inventec-d7264"
+INV_MAPLE_PLATFORM       = "SONiC-Inventec-d6356"
+INV_MAPLE_EVT1_PLATFORM  = "SONiC-Inventec-d6556"
+INV_MAGNOLIA_PLATFORM    = "SONiC-Inventec-d6254qs"
 
 transceiver_type_dict = { 
                           "FCBG110SD1C03": "SR",
@@ -152,7 +153,7 @@ class BCMUtil(bcmshell):
                 self.eagle_list = [66,100]
             elif name == INV_SEQUOIA_PLATFORM:
                 self.eagle_list = [66,100]
-            elif name == INV_MAPLE_PLATFORM:
+            elif name == INV_MAPLE_PLATFORM or name == INV_MAPLE_EVT1_PLATFORM:
                 self.eagle_list = [66,130]
             else:
                 self.eagle_list = []
@@ -245,7 +246,7 @@ class TransceiverUtil(SfpUtil):
     def set_transceiver_type( self, portNum, pn ):
         type = self.get_transceiver_type( pn )
         if type is not None:             
-            if bcm_obj.get_platform() == INV_SEQUOIA_PLATFORM or bcm_obj.get_platform() == INV_MAPLE_PLATFORM :
+            if bcm_obj.get_platform() == INV_SEQUOIA_PLATFORM or bcm_obj.get_platform() == INV_MAPLE_PLATFORM or port_obj.get_platform() == INV_MAPLE_EVT1_PLATFORM:
                 speed = bcm_obj.get_sal_config_list()[self.transceiver_port_mapping[portNum]["bcm"]]["speed"]
                 bcm_obj.execute_command( "port %s if=%s speed=%d" % ( self.get_bcm_port_name(portNum), type, speed ) )
             else:
