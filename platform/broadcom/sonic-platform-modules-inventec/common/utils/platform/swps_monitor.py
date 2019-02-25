@@ -52,7 +52,8 @@ def log_message( level, string ):
 
 class PortUtil(bcmshell):
 
-    port_to_bcm_mapping = dict()         
+    port_to_bcm_mapping = dict()
+    dport = dict()
     eagle_list = []
     platform = None
     
@@ -125,13 +126,22 @@ class PortUtil(bcmshell):
     def initial_sal_config_list( self ):
         content = self.run("config")  
         for line in content.split("\n"):
+            DportObject = re.search(r"dport\_map\_port\_(?P<old>\d+)\=(?P<new>\d+)",line)
+            if DportObject is not None:
+                self.dport[int(DportObject.group("old"))] = int(DportObject.group("new"))
+
+        for line in content.split("\n"):
             ConfigObject = re.search(r"portmap\_(?P<bcm_id>\d+)\=(?P<lane_id>\d+)\:\d+",line)
             if ConfigObject is not None:   
                 if int(ConfigObject.group("bcm_id")) not in self.get_eagle_port():
                     for key,value in self.port_to_bcm_mapping.iteritems():
                         if int(ConfigObject.group("lane_id")) in value["lane"]:
-                            value["bcm_id"] = int(ConfigObject.group("bcm_id"))
+                            if int(ConfigObject.group("bcm_id")) in self.dport.keys():
+                                value["bcm_id"] = self.dport[int(ConfigObject.group("bcm_id"))]
+                            else:
+                                value["bcm_id"] = int(ConfigObject.group("bcm_id"))
                             break
+
                     
     # === ps === # 
     # SWPS_port --
@@ -146,7 +156,7 @@ class PortUtil(bcmshell):
         for line in content.split("\n"):
             PSObject = re.search(r"(?P<port_name>(xe|ce)\d+)\(\s*(?P<bcm_id>\d+)\).+\s+(?P<speed>\d+)G",line)
             if PSObject is not None:
-                if int(PSObject.group("bcm_id")) not in self.get_eagle_port():                    
+                if int(PSObject.group("bcm_id")) not in self.get_eagle_port():
                     for key,value in self.port_to_bcm_mapping.iteritems():
                         if int(PSObject.group("bcm_id")) == value["bcm_id"]:
                             value["bcm_name"] = PSObject.group("port_name")
@@ -224,18 +234,22 @@ def main():
                             port_obj.parsing_port_list()
                             with open('/sys/class/swps/{0}/info'.format(portname),'r') as f:
                                 info = f.read()
-                            # The info of DAC caple is head with 28. if insert DAC, we need to enable AN feature.
-                            if info is not None and info[0:2] == "28" :
-                                port_obj.execute_command( "port {0} an=1 speed={1}".format( port_obj.port_to_bcm_mapping[portname]["bcm_name"], port_obj.port_to_bcm_mapping[portname]["speed"] ) )
-                            else:
-                                if port_obj.port_to_bcm_mapping[portname]["speed"] == 100000 :
-                                    port_obj.execute_command( "port {0} an=0 if=CR4 speed={1}".format( port_obj.port_to_bcm_mapping[portname]["bcm_name"], port_obj.port_to_bcm_mapping[portname]["speed"] ) )
-                                elif port_obj.port_to_bcm_mapping[portname]["speed"] == 25000 :
-                                    port_obj.execute_command( "port {0} an=0 if=CR speed={1}".format( port_obj.port_to_bcm_mapping[portname]["bcm_name"], port_obj.port_to_bcm_mapping[portname]["speed"] ) )
+                            # The info of insert object is transceiver, we need to set the correct type (CR/CR4) to improve the quality of the packet transmission.
+                            if info is not None :
+                                if port_obj.port_to_bcm_mapping[portname]["speed"] == 100000 or port_obj.port_to_bcm_mapping[portname]["speed"] == 40000 :
+                                    if info[0:2] == "28" :
+                                        port_obj.execute_command( "port {0} if=KR4 speed={1}".format( port_obj.port_to_bcm_mapping[portname]["bcm_name"], port_obj.port_to_bcm_mapping[portname]["speed"] ) )
+                                    else :
+                                        port_obj.execute_command( "port {0} if=CR4 speed={1}".format( port_obj.port_to_bcm_mapping[portname]["bcm_name"], port_obj.port_to_bcm_mapping[portname]["speed"] ) )
+                                elif port_obj.port_to_bcm_mapping[portname]["speed"] == 25000 or port_obj.port_to_bcm_mapping[portname]["speed"] == 10000 :
+                                    if info[0:2] == "28" :
+                                        port_obj.execute_command( "port {0} if=KR speed={1}".format( port_obj.port_to_bcm_mapping[portname]["bcm_name"], port_obj.port_to_bcm_mapping[portname]["speed"] ) )
+                                    else :
+                                        port_obj.execute_command( "port {0} if=CR speed={1}".format( port_obj.port_to_bcm_mapping[portname]["bcm_name"], port_obj.port_to_bcm_mapping[portname]["speed"] ) )
                                 else:
-                                    port_obj.execute_command( "port {0} an=0 speed={1}".format(port_obj.port_to_bcm_mapping[portname]["bcm_name"],port_obj.port_to_bcm_mapping[portname]["speed"] ))
+                                    port_obj.execute_command( "port {0} if={1} speed={2}".format( port_obj.port_to_bcm_mapping[portname]["bcm_name"], event['IF_TYPE'], port_obj.port_to_bcm_mapping[portname]["speed"] ) )
                         else:
-                            port_obj.execute_command( "port {0} if={1}".format( port_obj.port_to_bcm_mapping[portname]["bcm_name"], event['IF_TYPE'] ) )
+                            port_obj.execute_command( "port {0} if={1} speed={2}".format( port_obj.port_to_bcm_mapping[portname]["bcm_name"], event['IF_TYPE'], port_obj.port_to_bcm_mapping[portname]["speed"] ) )
                     except Exception, e:
                             log_message( syslog.LOG_WARNING, "Exception. The warning is {0}".format(str(e)) )
                             raise Exception("[swps_monitor.py] Exception. The warning is {0}".format(str(e)) )
