@@ -1,0 +1,76 @@
+From fd0951979bdd419f251e4cc82c28d9fd6c43b1a8 Mon Sep 17 00:00:00 2001
+From: James Huang <huang.james@inventec.com>
+Date: Mon, 25 Feb 2019 16:10:41 +0800
+Subject: [PATCH] Enhance the show eeprom command to decode SFP A2 page and
+ QSFP 03 page
+
+---
+ .../x86_64-inventec_d6356-r0/plugins/sfputil.py         | 17 +++++++++++++++--
+ .../x86_64-inventec_d6556-r0/plugins/sfputil.py         | 17 +++++++++++++++--
+ 2 files changed, 30 insertions(+), 4 deletions(-)
+
+diff --git a/device/inventec/x86_64-inventec_d6356-r0/plugins/sfputil.py b/device/inventec/x86_64-inventec_d6356-r0/plugins/sfputil.py
+index e275b94..d512f6b 100755
+--- a/device/inventec/x86_64-inventec_d6356-r0/plugins/sfputil.py
++++ b/device/inventec/x86_64-inventec_d6356-r0/plugins/sfputil.py
+@@ -153,11 +153,24 @@ class SfpUtil(SfpUtilBase):
+         return self._port_to_eeprom_mapping
+ 
+     def __init__(self):
+-        eeprom_path = "/sys/bus/i2c/devices/{0}-0050/eeprom"
++        eeprom_path = "/sys/class/swps/port{0}/eeprom"
++        sfp_a2_eeprom_path = "/sys/class/swps/port{0}/A2"
++        qsfp_p3_eeprom_path = "/sys/class/swps/port{0}/Page03"
+ 
+         for x in range(0, self.port_end + 1):
+-            port_eeprom_path = eeprom_path.format(self.port_to_i2c_mapping[x])
++            port_eeprom_path = eeprom_path.format(x)
+             self.port_to_eeprom_mapping[x] = port_eeprom_path
++
++        # Set the SFP A2h i2c eeprom path
++        for y in range(0, self.qsfp_port_start):
++            if self.port_to_eeprom_mapping.has_key(y) :
++                self.port_to_eeprom_mapping[y] = [ self.port_to_eeprom_mapping[y] , sfp_a2_eeprom_path.format(y)]
++
++        # Set the QSFP Page03 i2c eeprom path
++        for z in range(self.qsfp_port_start, self.qsfp_port_end +1 ):
++            if self.port_to_eeprom_mapping.has_key(z) :
++                self.port_to_eeprom_mapping[z] = [ self.port_to_eeprom_mapping[z] , qsfp_p3_eeprom_path.format(z)]
++
+         SfpUtilBase.__init__(self)
+ 
+     def get_presence(self, port_num):
+diff --git a/device/inventec/x86_64-inventec_d6556-r0/plugins/sfputil.py b/device/inventec/x86_64-inventec_d6556-r0/plugins/sfputil.py
+index d1df26d..444bc60 100755
+--- a/device/inventec/x86_64-inventec_d6556-r0/plugins/sfputil.py
++++ b/device/inventec/x86_64-inventec_d6556-r0/plugins/sfputil.py
+@@ -153,11 +153,24 @@ class SfpUtil(SfpUtilBase):
+         return self._port_to_eeprom_mapping
+ 
+     def __init__(self):
+-        eeprom_path = "/sys/bus/i2c/devices/{0}-0050/eeprom"
++        eeprom_path = "/sys/class/swps/port{0}/eeprom"
++        sfp_a2_eeprom_path = "/sys/class/swps/port{0}/A2"
++        qsfp_p3_eeprom_path = "/sys/class/swps/port{0}/Page03"
+ 
+         for x in range(0, self.port_end + 1):
+-            port_eeprom_path = eeprom_path.format(self.port_to_i2c_mapping[x])
++            port_eeprom_path = eeprom_path.format(x)
+             self.port_to_eeprom_mapping[x] = port_eeprom_path
++
++        # Set the SFP A2h i2c eeprom path
++        for y in range(0, self.qsfp_port_start):
++            if self.port_to_eeprom_mapping.has_key(y) :
++                self.port_to_eeprom_mapping[y] = [ self.port_to_eeprom_mapping[y] , sfp_a2_eeprom_path.format(y)]
++
++        # Set the QSFP Page03 i2c eeprom path
++        for z in range(self.qsfp_port_start, self.qsfp_port_end +1 ):
++            if self.port_to_eeprom_mapping.has_key(z) :
++                self.port_to_eeprom_mapping[z] = [ self.port_to_eeprom_mapping[z] , qsfp_p3_eeprom_path.format(z)]
++
+         SfpUtilBase.__init__(self)
+ 
+     def get_presence(self, port_num):
+-- 
+2.1.4
+

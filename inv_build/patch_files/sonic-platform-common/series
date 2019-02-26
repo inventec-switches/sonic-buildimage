@@ -4,3 +4,4 @@
 [order]
 sff8472-Fix-incorrect-VendorOUI-decode-type.patch
 Add-Wavelength-and-TX_Power-attribute.patch
+enhance-the-show-eeprom-command-to-decode-SFP-A2-pag.patch
