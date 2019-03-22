@@ -126,6 +126,7 @@ drivers =[
 'inv_eeprom',
 'inv_platform',
 'inv_cpld',
+'monitor',
 'swps']
 
 
