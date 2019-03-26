@@ -243,7 +243,7 @@ static int __init inv_platform_init(void)
     if (ret) {
         printk(KERN_ERR "i2c-gpio: platform_device_add fail %d\n", ret);
     }
-
+   msleep(10);
    for(i=0; i<ARRAY_SIZE(i2cdev_list); i++) {
         adap = i2c_get_adapter( i2cdev_list[i].ch );
         if (adap == NULL) {

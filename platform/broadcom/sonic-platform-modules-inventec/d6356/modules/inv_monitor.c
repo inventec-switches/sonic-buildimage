@@ -125,17 +125,17 @@ static ssize_t show_attr_psu_temperature(struct device *dev,
     {
         modulus = result % 1000 ;
         floater = modulus / 100 ;
-        return snprintf(buf, MAX_PATH_SIZE, "+%d.%d C\n", integer, floater );
+        return snprintf(buf, MAX_PATH_SIZE, "+%d.%d C", integer, floater );
     }
     else
     {
         modulus = -result % 1000 ;
         floater = modulus / 100 ;
-        return snprintf(buf, MAX_PATH_SIZE, "%d.0 C\n", integer, floater );
+        return snprintf(buf, MAX_PATH_SIZE, "%d.0 C", integer, floater );
     }
 
 err_get_psu_module_temperature :
-    return sprintf(buf, "N/A\n");
+    return sprintf(buf, "N/A");
 }
 
 static ssize_t show_attr_psu_voltage(struct device *dev,
@@ -177,17 +177,17 @@ static ssize_t show_attr_psu_voltage(struct device *dev,
     {
         modulus = result % 1000 ;
         floater = modulus / 10 ;
-        return snprintf(buf, MAX_PATH_SIZE, "+%d.%02d V\n", integer, floater);
+        return snprintf(buf, MAX_PATH_SIZE, "+%d.%02d V", integer, floater);
     }
     else
     {
         modulus = -result % 1000 ;
         floater = modulus / 10 ;
-        return snprintf(buf, MAX_PATH_SIZE, "%d.%02d V\n", integer, floater);
+        return snprintf(buf, MAX_PATH_SIZE, "%d.%02d V", integer, floater);
     }
 
 err_get_psu_module_voltage :
-    return sprintf(buf, "N/A\n");
+    return sprintf(buf, "N/A");
 }
 
 static ssize_t show_attr_psu_power(struct device *dev,
@@ -229,18 +229,18 @@ static ssize_t show_attr_psu_power(struct device *dev,
     {
         modulus = result % 1000000 ;
         floater = modulus / 10000 ;
-        return snprintf(buf, MAX_PATH_SIZE, "+%d.%02d W\n", integer, floater);
+        return snprintf(buf, MAX_PATH_SIZE, "+%d.%02d W", integer, floater);
     }
     else
     {
         modulus = -result % 1000000 ;
         floater = modulus / 10000 ;
-        return snprintf(buf, MAX_PATH_SIZE, "%d.%02d W\n", integer, floater);
+        return snprintf(buf, MAX_PATH_SIZE, "%d.%02d W", integer, floater);
     }
     goto err_get_psu_module_power;
 
 err_get_psu_module_power :
-    return sprintf(buf, "N/A\n");
+    return sprintf(buf, "N/A");
 }
 
 static ssize_t show_attr_psu_present(struct device *dev,
@@ -257,28 +257,28 @@ static ssize_t show_attr_psu_present(struct device *dev,
 
     result = read_psu_present(notep->present) ;
     if ( result > -1 )
-        return snprintf(buf, MAX_PATH_SIZE, "%d\n", result);
+        return snprintf(buf, MAX_PATH_SIZE, "%d", result);
     else
         goto err_get_psu_module_present;
 
     goto err_get_psu_module_present;
 
 err_get_psu_module_present :
-    return sprintf(buf, "N/A\n");
+    return sprintf(buf, "N/A");
 }
 
 static ssize_t show_attr_psu_temperature_number(struct device *dev,
                                      struct device_attribute *attr,
                                      char *buf)
 {
-	return sprintf(buf, "%d\n", NUM_PSU_TEMP);
+	return sprintf(buf, "%d", NUM_PSU_TEMP);
 }
 
 static ssize_t show_attr_psu_number(struct class *class,
                                      struct class_attribute *attr,
                                      char *buf)
 {
-	return sprintf(buf, "%d\n", NUM_PSU);
+	return sprintf(buf, "%d", NUM_PSU);
 }
 
 static DEVICE_ATTR(present,            S_IRUGO,         show_attr_psu_present,                   NULL);
@@ -435,19 +435,19 @@ static ssize_t show_attr_fan_present(struct class *class,
         goto err_get_fan_module_present ;
 
     if ( result > -1 )
-        return snprintf(buf, MAX_PATH_SIZE, "%d\n", result);
+        return snprintf(buf, MAX_PATH_SIZE, "%d", result);
     else
         goto err_get_fan_module_present;
 
 err_get_fan_module_present :
-    return sprintf(buf, "N/A\n");
+    return sprintf(buf, "N/A");
 }
 
 static ssize_t show_attr_fan_number(struct class *class,
                                      struct class_attribute *attr,
                                      char *buf)
 {
-	return sprintf(buf, "%d\n", NUM_FAN);
+	return sprintf(buf, "%d", NUM_FAN);
 }
 
 static ssize_t show_attr_fan_rpm(struct class *class,
@@ -532,12 +532,12 @@ static ssize_t show_attr_fan_rpm(struct class *class,
     }
 
     if ( result >= 0 )
-        return snprintf(buf, MAX_PATH_SIZE, "%d RPM\n", result);
+        return snprintf(buf, MAX_PATH_SIZE, "%d RPM", result);
     else
         goto err_get_fan_module_rpm;
 
 err_get_fan_module_rpm :
-    return sprintf(buf, "N/A\n");
+    return sprintf(buf, "N/A");
 }
 
 static struct class_attribute fan_class_attrs[] = {
@@ -584,14 +584,14 @@ static ssize_t show_attr_core_temperature(struct class *class,
         goto err_get_core_module_temperature;
 
     if ( result > 0 )
-        return snprintf(buf, MAX_PATH_SIZE, "+%d.0 C\n", (result/1000));
+        return snprintf(buf, MAX_PATH_SIZE, "+%d.0 C", (result/1000));
     else
-        return snprintf(buf, MAX_PATH_SIZE, "%d.0 C\n", (result/1000));
+        return snprintf(buf, MAX_PATH_SIZE, "%d.0 C", (result/1000));
 
     goto err_get_core_module_temperature ;
 
 err_get_core_module_temperature :
-    return sprintf(buf, "N/A\n");
+    return sprintf(buf, "N/A");
 }
 
 static struct class_attribute core_class_attrs[] = {

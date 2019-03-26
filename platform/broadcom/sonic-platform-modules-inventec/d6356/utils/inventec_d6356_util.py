@@ -124,8 +124,8 @@ drivers =[
 'ucd9000',
 #inv-modules
 'inv_eeprom',
-'inv_platform',
 'inv_cpld',
+'inv_platform',
 'monitor',
 'swps']
 
