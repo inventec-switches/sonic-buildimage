@@ -113,6 +113,9 @@ serdes_firmware_mode
 serdes_if_type
 serdes_pre_driver_current
 serdes_preemphasis
+serdes_preemphasis_pre2_post2_post3
+serdes_preemphasis_10G
+serdes_preemphasis_pre2_post2_post3_10G
 serdes_rx_los_xe
 serdes_sgmii_m
 skip_L2_USER_ENTRY
