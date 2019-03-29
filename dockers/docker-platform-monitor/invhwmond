@@ -1,0 +1,136 @@
+#!/usr/bin/env python
+
+"""
+    invhwmond
+    monitor the inventec platform status
+
+    supported platform: d6356
+"""
+import sys
+import subprocess
+import time
+import syslog
+import redis
+from swsssdk import ConfigDBConnector
+
+HWMON_CPLD_PATH     = "/sys/class/hwmon/hwmon{}/device/"
+CPLD_NAME           = "inv_cpld"
+PSU_TAOTAL_NUM      = 2
+FAN_TAOTAL_NUM      = 4
+HWMON_INDEX         = 7
+PLATFORM            = ["x86_64-inventec_d6356-r0"]
+
+
+def _run_command(command):
+    #print command
+    p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+    stdout = p.communicate()[0]
+    p.wait()
+    if p.returncode != 0:
+        pass
+        #syslog.syslog(syslog.LOG_ERR, '[invhwmond] command execution returned {}. Command: "{}", stdout: "{}"'.format(p.returncode, command, stdout))
+    else:
+        return stdout
+
+
+def _platform_detect():
+    config_db = ConfigDBConnector()
+    config_db.connect()
+    machine_box = config_db.get_entry('DEVICE_METADATA', 'localhost')['platform']
+
+    if machine_box not in PLATFORM:
+        exit(0)
+
+
+def _hwmon_index_detect():
+    global HWMON_CPLD_PATH
+
+    for index in range(0, HWMON_INDEX+1):
+        cpld_path = HWMON_CPLD_PATH.format(index)
+        cmd = "cat {}name".format(cpld_path)
+        name = _run_command(cmd)
+        if name is not None:
+            if name.strip() == CPLD_NAME:
+                HWMON_CPLD_PATH = cpld_path
+
+
+def _psu_init():
+    status = []
+
+    for num in range(1, PSU_TAOTAL_NUM+1):
+        name = "psu_{}".format(num)
+        status.append({"device_name":name, "status":"1"})
+
+    return status
+
+
+def _fan_init():
+    status = []
+
+    for num in range(1, FAN_TAOTAL_NUM+1):
+        name = "fan_{}".format(num)
+        status.append({"device_name":name, "status":"0"})
+
+    return status
+
+
+def _check_psu(psu_info):
+    """
+        psu status
+            0 : unpowered
+            1 : normal
+            2 : not installed
+    """
+    for num in range(1, PSU_TAOTAL_NUM+1):
+        cmd = "cat {}psu{}".format(HWMON_CPLD_PATH, num)
+        current_status = _run_command(cmd).strip().split(":")
+
+        if psu_info[num-1]["status"] is not current_status[0]:
+            if current_status[0] == "0":
+                syslog.syslog(syslog.LOG_WARNING, "[invhwmond] {} is {}".format(psu_info[num-1]["device_name"], current_status[1]))
+            elif current_status[0] == "1":
+                syslog.syslog(syslog.LOG_INFO, "[invhwmond] {} is {}".format(psu_info[num-1]["device_name"], current_status[1]))
+            else:
+                syslog.syslog(syslog.LOG_WARNING, "[invhwmond] {} is {}".format(psu_info[num-1]["device_name"], current_status[1]))
+            psu_info[num-1]["status"] = current_status[0]
+
+    return psu_info
+
+
+def _check_fan(fan_info):
+    """
+        fan status
+            0   : Normal Type (clockwise)
+            1   : Reversal Type (anticlockwise)
+            2,3 : UNPLUGGED
+    """
+    for num in range(1, FAN_TAOTAL_NUM+1):
+        cmd = "cat {}fanmodule{}_type".format(HWMON_CPLD_PATH, num)
+        current_status = _run_command(cmd).strip().split(":")
+
+        if fan_info[num-1]["status"] is not current_status[0]:
+            if current_status[0] == "0":
+                syslog.syslog(syslog.LOG_INFO, "[invhwmond] {} is {}".format(fan_info[num-1]["device_name"], current_status[1]))
+            elif current_status[0] == "1":
+                syslog.syslog(syslog.LOG_INFO, "[invhwmond] {} is {}".format(fan_info[num-1]["device_name"], current_status[1]))
+            else:
+                syslog.syslog(syslog.LOG_WARNING, "[invhwmond] {} is {}".format(fan_info[num-1]["device_name"], current_status[1]))
+            fan_info[num-1]["status"] = current_status[0]
+
+    return fan_info
+
+
+def main():
+    _platform_detect()
+    _hwmon_index_detect()
+    psu_status = _psu_init()
+    fan_status = _fan_init()
+
+    while True:
+        psu_status = _check_psu(psu_status)
+        fan_status = _check_fan(fan_status)
+        # refresh time
+        time.sleep(5)
+
+if __name__ == "__main__":
+    main()
