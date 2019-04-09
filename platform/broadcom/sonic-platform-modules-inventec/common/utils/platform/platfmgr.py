@@ -157,13 +157,12 @@ def wake_process():
     start = '/sbin/start-stop-daemon --quiet --oknodo --pidfile {0} --make-pidfile --startas {1} --start --background -- $DAEMON_OPTS'
 
     # daemon list ### xxx = start.format(xxx_PIDFILE, xxx_DAEMON)
-    swps_monitor    = start.format(SWPS_PIDFILE, SWPS_DAEMON)
     asic_monitor    = start.format(ASIC_PIDFILE, ASIC_DAEMON)
     led_proc        = start.format(LED_PIDFILE, LED_DAEMON)
 
 
     # add to the start command list [aaa, bbb, ccc]
-    cmdList = [swps_monitor, asic_monitor, led_proc]
+    cmdList = [asic_monitor, led_proc]
     for cmd in cmdList:
         os.system(cmd)
         msg_to_syslog('debug', cmd)
@@ -176,12 +175,11 @@ def kill_process():
     stop = '/sbin/start-stop-daemon --quiet --oknodo --stop --pidfile {0} --retry 10'
 
     # daemon list ### xxx = stop.format(xxx_PIDFILE)
-    swps_monitor    = stop.format(SWPS_PIDFILE)
     asic_monitor    = stop.format(ASIC_PIDFILE)
     led_proc        = stop.format(LED_PIDFILE)
     
     # add to the stop command list [xxx, yyy, zzz]
-    cmdList = [swps_monitor, asic_monitor, led_proc]
+    cmdList = [asic_monitor, led_proc]
     for cmd in cmdList:
         os.system(cmd)
 
