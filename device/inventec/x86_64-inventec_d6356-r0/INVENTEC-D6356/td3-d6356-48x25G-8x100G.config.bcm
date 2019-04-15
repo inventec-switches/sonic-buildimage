@@ -1,6 +1,6 @@
 ### fix for sonic
-cancun_dir=/etc/bcm/
-led_fw_dir=/usr/share/sonic/platform/
+cancun_dir=/etc/bcm/cancun/
+led_fw_dir=/etc/bcm/led/
 ptp_ts_pll_fref=50000000
 ptp_bs_fref_0=50000000
 ptp_bs_fref_1=50000000
