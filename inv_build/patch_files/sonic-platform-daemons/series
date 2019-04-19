@@ -5,3 +5,4 @@
 xcvrd-Add-new-feature-to-get-the-data-from-the-Inven.patch
 Add-Wavelength-and-RX_Am-to-db.patch
 Create-the-DDM-alarm-system-integrated-with-SONiC.patch
+Dynamic-detect-interfaces-for-SFP-QSFP.patch

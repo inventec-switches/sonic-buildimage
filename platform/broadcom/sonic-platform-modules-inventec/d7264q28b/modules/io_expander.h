@@ -6,7 +6,10 @@
 
 /* IOEXP type define (SFP series) */
 #define IOEXP_TYPE_MAGINOLIA_NAB      (10101)
-#define IOEXP_TYPE_CYPRESS_NABC       (10102)
+#define IOEXP_TYPE_MAGINOLIA_4AB      (10102)
+#define IOEXP_TYPE_MAPLE_NABC         (10104)
+#define IOEXP_TYPE_GULMOHAR_NABC      (10105)
+#define IOEXP_TYPE_SFP_8P_LAYOUT_1    (10106)
 
 /* IOEXP type define (QSFP series) */
 #define IOEXP_TYPE_MAGINOLIA_7AB      (10201)
@@ -19,6 +22,13 @@
 #define IOEXP_TYPE_TAHOE_5A           (10208)
 #define IOEXP_TYPE_TAHOE_6ABC         (10209)
 #define IOEXP_TYPE_SEQUOIA_NABC       (10210)
+#define IOEXP_TYPE_LAVENDER_P65       (10211)
+#define IOEXP_TYPE_MAPLE_0ABC         (10212)
+#define IOEXP_TYPE_GULMOHAR_7ABC      (10213)
+#define IOEXP_TYPE_QSFP_6P_LAYOUT_1   (10214)
+
+/* CPLD type define */
+#define CPLD_TYPE_COTTONWOOD          (10301)
 
 /* IOEXP mode define */
 #define IOEXP_MODE_POLLING            (19000)
@@ -37,7 +47,6 @@
 #define ERR_IOEXP_NOSTATE              (-104)
 #define ERR_IOEXP_BADINPUT             (-105)
 #define ERR_IOEXP_UNEXCPT              (-199)
-
 
 #define SWPS_INFO(fmt, args...) printk( KERN_INFO "[SWPS] " fmt, ##args)
 #define SWPS_WARN(fmt, args...) printk( KERN_WARNING "[SWPS] " fmt, ##args)
@@ -74,8 +83,8 @@ struct ioexp_bitmap_s {
 };
 
 struct ioexp_map_s {
-    int chip_amount;    /* Number of chips that IOEXP object content    */
-    int data_width;     /* Number of (Read/Write/Config) bytes          */
+    int chip_amount;     /* Number of chips that IOEXP object content    */
+    int data_width;      /* Number of (Read/Write/Config) bytes          */
     struct ioexp_addr_s   *map_addr;           /* Chip address info      */
     struct ioexp_bitmap_s  map_present[10];    /* IOEXP for SFP / QSFP   */
     struct ioexp_bitmap_s  map_tx_disable[10]; /* IOEXP for SFP          */
@@ -166,6 +175,9 @@ int  resync_channel_tier_1(void);
 
 
 #endif /* IO_EXPANDER_H */
+
+
+
 
 
 

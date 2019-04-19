@@ -15,8 +15,7 @@ except ImportError as e:
 class PsuUtil(PsuBase):
     """Platform-specific PSUutil class"""
 
-    PSU_DIR1 = "/sys/class/hwmon/hwmon1/device"
-    PSU_DIR2 = "/sys/class/hwmon/hwmon3/device"
+    PSU_DIR = "/sys/class/hwmon/hwmon1"
 
     def __init__(self):
         PsuBase.__init__(self)
@@ -55,17 +54,12 @@ class PsuUtil(PsuBase):
         """
         status = 0
         attr_file = 'psoc_psu'+ str(index) + '_iout'        
-        attr_path = self.PSU_DIR1 +'/' + attr_file
-                  
+        attr_path = self.PSU_DIR +'/' + attr_file
         attr_value = self.get_attr_value(attr_path)
-        if (attr_value == 'ERR'):
-            attr_path = self.PSU_DIR2 +'/' + attr_file
-            attr_value = self.get_attr_value(attr_path)
+        if (attr_value != 'ERR'):
             # Check for PSU status
             if (attr_value != 0):
                     status = 1
-        if (attr_value != 0):
-	    status = 1	    
         return status
 
     def get_psu_presence(self, index):
@@ -80,14 +74,11 @@ class PsuUtil(PsuBase):
         ind = index-1
         attr_file ='psu'+ str(ind)
         normal_attr_value = '0 : normal'
-        attr_path = self.PSU_DIR1 +'/' + attr_file 
+        attr_path = self.PSU_DIR +'/' + attr_file
         attr_value = self.get_attr_value(attr_path)
-        if (attr_value == 'ERR'):
-            attr_path = self.PSU_DIR2 +'/' + attr_file
-            attr_value = self.get_attr_value(attr_path)
+        if (attr_value != 'ERR'):
             # Check for PSU presence
             if (attr_value == normal_attr_value):
                     status = 1
-        if (attr_value == normal_attr_value):
-                    status = 1
         return status
+

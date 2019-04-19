@@ -1,0 +1,115 @@
+From 78f1c1292f2857b40f1a5cd0ca7b901205984bf1 Mon Sep 17 00:00:00 2001
+From: James Huang <huang.james@inventec.com>
+Date: Tue, 16 Apr 2019 20:08:19 +0800
+Subject: [PATCH] Dynamic detect interfaces for SFP/QSFP
+
+  (1) Enhance the XCVRD feature to support multiple platform.
+  (2) Fix the attribute name from tx_bias to bias.
+  (3) Add the unit conversion function (mw to dbm).
+---
+ sonic-xcvrd/scripts/xcvrd | 47 +++++++++++++++++++++++++++++------------------
+ 1 file changed, 29 insertions(+), 18 deletions(-)
+
+diff --git a/sonic-xcvrd/scripts/xcvrd b/sonic-xcvrd/scripts/xcvrd
+index ede1c94..e829f92 100644
+--- a/sonic-xcvrd/scripts/xcvrd
++++ b/sonic-xcvrd/scripts/xcvrd
+@@ -65,22 +65,11 @@ BIAS_UNIT = 'mA'
+ # swps driver folder
+ SWPS_FOLDER = "/sys/class/swps/"
+ 
+-PORT_NUM = 56
+-SFP_PORT = 48
+-QSFP_PORT = 8
++PORT_NUM = 0
++SFP_PORT = 0
++QSFP_PORT = 0
+ LANE = 4
+ 
+-BiasHighAlarmList = [0] * (SFP_PORT + QSFP_PORT * LANE)
+-BiasLowAlarmList = [0] * (SFP_PORT + QSFP_PORT * LANE)
+-RXPowerHighAlarmList = [0] * (SFP_PORT + QSFP_PORT * LANE)
+-RXPowerLowAlarmList = [0] * (SFP_PORT + QSFP_PORT * LANE)
+-TXPowerHighAlarmList = [0] * (SFP_PORT + QSFP_PORT * LANE)
+-TXPowerLowAlarmList = [0] * (SFP_PORT + QSFP_PORT * LANE)
+-TempHighAlarmList = [0] * PORT_NUM
+-TempLowAlarmList = [0] * PORT_NUM
+-VoltageHighAlarmList = [0] * PORT_NUM
+-VoltageLowAlarmList = [0] * PORT_NUM
+-
+ #========================== Syslog wrappers ==========================
+ 
+ def log_info(msg, also_print_to_console=False):
+@@ -327,14 +316,14 @@ def get_swps_transceiver_dom_info_dict( physical_port_id ):
+                 for line in readPtr:
+                     power = re.search(r"(RX\-[1234]\:)*(?P<rx>\d+\.\d+)", line)
+                     if power is not None:
+-                        dom_info_dict['rx{0}power'.format(count)] = power.group("rx")
++                        dom_info_dict['rx{0}power'.format(count)] = power_in_dbm(float(power.group("rx")))
+                         count = count + 1
+         except:
+             pass
+ 
+-        # tx_bias
++        # bias
+         try:
+-            with open( "{0}/tx_bias".format(path), 'rb') as readPtr:
++            with open( "{0}/bias".format(path), 'rb') as readPtr:
+                 count = 1
+                 for line in readPtr:
+                     bias = re.search(r"(TX\-[1234]\:)*(?P<bias>\d+\.\d+)", line)
+@@ -351,7 +340,7 @@ def get_swps_transceiver_dom_info_dict( physical_port_id ):
+                 for line in readPtr:
+                     power = re.search(r"(TX\-[1234]\:)*(?P<tx>\d+\.\d+)", line)
+                     if power is not None:
+-                        dom_info_dict['tx{0}power'.format(count)] = power.group("tx")
++                        dom_info_dict['tx{0}power'.format(count)] = power_in_dbm(float(power.group("tx")))
+                         count = count + 1
+         except:
+             pass
+@@ -447,6 +436,9 @@ def del_port_sfp_dom_info_to_db(logical_port_name, int_tbl, dom_tbl):
+             log_error("This functionality is currently not implemented for this platform")
+             sys.exit(3)
+ 
++def power_in_dbm(mW):
++    return "%.4f" % (mw_to_dbm(mW))
++
+ def power_in_dbm_str(mW):
+     return "%.4f%s" % (mw_to_dbm(mW), "dBm")
+ 
+@@ -458,6 +450,10 @@ def mw_to_dbm(mW):
+     return 10. * log10(mW)
+ 
+ def get_eeprom_alarm(physical_port_id):
++    global PORT_NUM
++    global SFP_PORT
++    global QSFP_PORT
++
+     global BiasHighAlarmList
+     global BiasLowAlarmList
+     global RXPowerHighAlarmList
+@@ -469,6 +465,21 @@ def get_eeprom_alarm(physical_port_id):
+     global VoltageHighAlarmList
+     global VoltageLowAlarmList
+ 
++    PORT_NUM = platform_sfputil.port_end - platform_sfputil.port_start + 1
++    QSFP_PORT = platform_sfputil.qsfp_port_end - platform_sfputil.qsfp_port_start + 1
++    SFP_PORT = PORT_NUM - QSFP_PORT
++
++    BiasHighAlarmList = [0] * (SFP_PORT + QSFP_PORT * LANE)
++    BiasLowAlarmList = [0] * (SFP_PORT + QSFP_PORT * LANE)
++    RXPowerHighAlarmList = [0] * (SFP_PORT + QSFP_PORT * LANE)
++    RXPowerLowAlarmList = [0] * (SFP_PORT + QSFP_PORT * LANE)
++    TXPowerHighAlarmList = [0] * (SFP_PORT + QSFP_PORT * LANE)
++    TXPowerLowAlarmList = [0] * (SFP_PORT + QSFP_PORT * LANE)
++    TempHighAlarmList = [0] * PORT_NUM
++    TempLowAlarmList = [0] * PORT_NUM
++    VoltageHighAlarmList = [0] * PORT_NUM
++    VoltageLowAlarmList = [0] * PORT_NUM
++
+     file_list = os.listdir(SWPS_FOLDER)
+     portname = "port{0}".format(physical_port_id)
+     if portname in os.listdir(SWPS_FOLDER):
+-- 
+2.1.4
+

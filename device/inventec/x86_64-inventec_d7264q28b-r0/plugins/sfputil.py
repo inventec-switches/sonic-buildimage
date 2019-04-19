@@ -5,10 +5,59 @@
 
 try:
     import time
+    import socket, re,os
+    from collections import OrderedDict
     from sonic_sfp.sfputilbase import SfpUtilBase
 except ImportError as e:
     raise ImportError("%s - required module not found" % str(e))
 
+NETLINK_KOBJECT_UEVENT = 15
+monitor = None
+
+class SWPSEventMonitor(object):
+
+    def __init__(self):
+        self.recieved_events = OrderedDict()
+        self.socket = socket.socket(
+            socket.AF_NETLINK, socket.SOCK_DGRAM, NETLINK_KOBJECT_UEVENT)
+
+    def start(self):
+        self.socket.bind((os.getpid(), -1))
+
+    def stop(self):
+        self.socket.close()
+
+    def __enter__(self):
+        self.start()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.stop()
+
+    def __iter__(self):
+        global monitor
+        while True:
+            for item in monitor.next_events():
+                yield item
+
+    def next_events(self):
+        data = self.socket.recv(16384)
+        event = {}
+        for item in data.split(b'\x00'):
+            if not item:
+                # check if we have an event and if we already received it
+                if event and event['SEQNUM'] not in self.recieved_events:
+                    self.recieved_events[event['SEQNUM']] = None
+                    if (len(self.recieved_events) > 100):
+                        self.recieved_events.popitem(last=False)
+                    yield event
+                event = {}
+            else:
+                try:
+                    k, v = item.split(b'=', 1)
+                    event[k.decode('ascii')] = v.decode('ascii')
+                except ValueError:
+                    pass
 
 class SfpUtil(SfpUtilBase):
     """Platform-specific SfpUtil class"""
@@ -112,11 +161,24 @@ class SfpUtil(SfpUtilBase):
         return self._port_to_eeprom_mapping
 
     def __init__(self):
-        eeprom_path = "/sys/bus/i2c/devices/{0}-0050/eeprom"
+        eeprom_path = "/sys/class/swps/port{0}/eeprom"
+        sfp_a2_eeprom_path = "/sys/class/swps/port{0}/A2"
+        qsfp_p3_eeprom_path = "/sys/class/swps/port{0}/Page03"
 
         for x in range(0, self.port_end + 1):
-            port_eeprom_path = eeprom_path.format(self.port_to_i2c_mapping[x])
+            port_eeprom_path = eeprom_path.format(x)
             self.port_to_eeprom_mapping[x] = port_eeprom_path
+
+        # Set the SFP A2h i2c eeprom path
+        for y in range(0, self.qsfp_port_start):
+            if self.port_to_eeprom_mapping.has_key(y) :
+                self.port_to_eeprom_mapping[y] = [ self.port_to_eeprom_mapping[y] , sfp_a2_eeprom_path.format(y)]
+
+        # Set the QSFP Page03 i2c eeprom path
+        for z in range(self.qsfp_port_start, self.qsfp_port_end +1 ):
+            if self.port_to_eeprom_mapping.has_key(z) :
+                self.port_to_eeprom_mapping[z] = [ self.port_to_eeprom_mapping[z] , qsfp_p3_eeprom_path.format(z)]
+
         SfpUtilBase.__init__(self)
 
     def get_presence(self, port_num):
@@ -219,7 +281,20 @@ class SfpUtil(SfpUtilBase):
         return True
 
     def get_transceiver_change_event(self):
-        """
-        TODO: This function need to be implemented
-        """
-        raise NotImplementedError
+
+        global monitor
+        port_dict = {}
+        with SWPSEventMonitor() as monitor:
+            for event in monitor:
+                if event['SUBSYSTEM'] == 'swps':
+                    #print('SWPS event. From %s, ACTION %s, IF_TYPE %s, IF_LANE %s' % (event['DEVPATH'], event['ACTION'], event['IF_TYPE'], event['IF_LANE']))
+                    portname = event['DEVPATH'].split("/")[-1]
+                    rc = re.match(r"port(?P<num>\d+)",portname)
+                    if rc is not None:
+                        if event['ACTION'] == "remove":
+                            port_dict[rc.group("num")] = "0"
+                        if event['ACTION'] == "add":
+                            port_dict[rc.group("num")] = "1"
+                        return True, port_dict
+                    return False, {}
+
