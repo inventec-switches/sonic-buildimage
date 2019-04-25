@@ -1,4 +1,9 @@
 sonic-inventec-platform-modules (1.1.0) unstable; urgency=low
+  * Add support for BT2545
+
+ -- clare lu <lu.clare@inventec.com>  Wed, 24 Apr 2019 17:37:26 +0800
+
+sonic-inventec-platform-modules (1.1.0) unstable; urgency=low
   * Add support for Inventec d7264
 
  -- alvin lin <lin.alvin@inventec.com>  Thu, 12 Jul 2018 16:00:00 +0800

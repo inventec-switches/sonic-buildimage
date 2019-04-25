@@ -20,7 +20,7 @@ Architecture: amd64
 Depends: linux-image-4.9.0-8-amd64
 Description: kernel modules for platform devices such as fan, led
 
-Package: platform-modules-d6556
+Package: platform-modules-bt2545
 Architecture: amd64
 Depends: linux-image-4.9.0-8-amd64
 Description: kernel modules for platform devices such as fan, led

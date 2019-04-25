@@ -1,0 +1,3 @@
+bt2545/utils/inventec_bt2545_util.py              usr/local/bin
+common/utils/platform/*.py                        usr/share/sonic/device/x86_64-inventec_bt2545-r0/plugins
+systemd/platform-modules-bt2545.service           lib/systemd/system

@@ -10,6 +10,7 @@ bcm_xlate_port_enable
 bcm56340_4x10
 bcm56340_2x10
 bcm56340_config
+cancun_dir
 cdma_timeout_usec
 core_clock_frequency
 ctr_evict_enable
@@ -24,9 +25,11 @@ ext_tcam_freq
 force_core_pll
 fpem_mem_entries
 higig2_hdr_mode
+ifp_inports_support_enable
 ipmc_do_vlan
 ipv6_lpm_128b_enable
 knet_filter_persist
+led_fw_dir
 l2_mem_entries
 l2delete_chunks
 l2mod_dma_intr_enable
@@ -66,6 +69,9 @@ parity_enable
 pbmp_oversubscribe
 pbmp_xport
 pci2eb_overrid
+pdma_dv_free_count
+pdma_dv_free_size
+pdma_descriptor_prefetch_enable
 pfc_deadlock_seq_control
 phy_84328
 phy_84752
@@ -104,6 +110,7 @@ port_phy_id0
 port_phy_id1
 portgroup
 portmap
+port_flex_enable
 prbs_polynomial
 ptp_bs_fref
 ptp_ts_pll_fref
@@ -121,6 +128,9 @@ serdes_firmware_mode
 serdes_if_type
 serdes_pre_driver_current
 serdes_preemphasis
+serdes_preemphasis_pre2_post2_post3
+serdes_preemphasis_10G
+serdes_preemphasis_pre2_post2_post3_10G
 serdes_rx_los
 serdes_sgmii_m
 skip_L2_USER_ENTRY
