@@ -5,3 +5,4 @@
 AddRoute-resource-IPV4_ROUTE-max-count-check.patch
 check_crm_acltable_ingress_port_available_count.patch
 portsorch-Add-lag-name-and-oid-map-to-the-counter-ta.patch
+enable_create_acl_table_egress_bind_to_port.patch
