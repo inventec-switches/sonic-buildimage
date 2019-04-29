@@ -22,11 +22,23 @@ auth	[success=done new_authtok_reqd=done default=ignore{{ ' auth_err=die' if not
 auth	[success=1 default=ignore]	pam_tacplus.so server={{ last_server.ip }}:{{ last_server.tcp_port }} secret={{ last_server.passkey }} login={{ last_server.auth_type }} timeout={{ last_server.timeout }} try_first_pass
 
 {% endif %}
-{% elif auth['login'] == 'tacacs+' or auth['login'] == 'tacacs+,local' %}
+{% elif auth['login'] == 'tacacs+,local' %}
 {% for server in servers %}
 auth	[success=done new_authtok_reqd=done default=ignore{{ ' auth_err=die' if not auth['failthrough'] }}]	pam_tacplus.so server={{ server.ip }}:{{ server.tcp_port }} secret={{ server.passkey }} login={{ server.auth_type }} timeout={{ server.timeout }} try_first_pass
 {% endfor %}
 auth	[success=1 default=ignore]	pam_unix.so nullok try_first_pass
+
+{% elif auth['login'] == 'tacacs+' %}
+{% if servers | count %}
+{% for server in servers | sub(0,-1) %}
+auth	[success=done new_authtok_reqd=done default=ignore{{ ' auth_err=die' if not auth['failthrough'] }}]	pam_tacplus.so server={{ server.ip }}:{{ server.tcp_port }} secret={{ server.passkey }} login={{ server.auth_type }} timeout={{ server.timeout }} try_first_pass
+{% endfor %}
+{% set last_server = servers | last %}
+auth    [success=1 default=ignore]      pam_tacplus.so server={{ last_server.ip }}:{{ last_server.tcp_port }} secret={{ last_server.passkey }} login={{ last_server.auth_type }} timeout={{ last_server.timeout }} try_first_pass
+
+{% else %}
+auth	[success=1 default=ignore]	pam_unix.so nullok try_first_pass
+{% endif %}
 
 {% else %}
 auth	[success=1 default=ignore]	pam_unix.so nullok try_first_pass
