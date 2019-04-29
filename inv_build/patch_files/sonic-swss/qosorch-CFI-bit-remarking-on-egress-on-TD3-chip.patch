@@ -1,0 +1,119 @@
+From 13e00eac83497f3864e530879f6883e687a5b8a7 Mon Sep 17 00:00:00 2001
+From: James Huang <huang.james@inventec.com>
+Date: Mon, 1 Apr 2019 09:49:29 +0800
+Subject: [PATCH] qosorch: CFI bit remarking on egress on TD3 chip.
+
+---
+ orchagent/qosorch.cpp | 68 +++++++++++++++++++++++++++++++++++++++++++++++++++
+ orchagent/qosorch.h   |  2 ++
+ 2 files changed, 70 insertions(+)
+
+diff --git a/orchagent/qosorch.cpp b/orchagent/qosorch.cpp
+index 23f0e9f..f0847df 100644
+--- a/orchagent/qosorch.cpp
++++ b/orchagent/qosorch.cpp
+@@ -637,6 +637,19 @@ void QosOrch::initColorAcl()
+     // init ACL system table
+     acl_table_id = initSystemAclTable();
+ 
++    char *platform = getenv("platform");
++    // For TD3 chip,
++    // the packets which are classified in the YELLOW buffer, the processing behavior of the TD3 chip is different from legacy chips like TD2+.
++    // TD3 chip will remark CFI field to 1 on egress.
++    // For resolving the above issue, We plan to add two ACL rules which only for TD3 platform and the priority is higher than the original rules.
++    if (!platform ||
++         (platform && strcmp(platform, "x86_64-inventec_d6556-r0") != 0) ||
++         (platform && strcmp(platform, "x86_64-inventec_d6356-r0") != 0))
++    {
++        initAclEntryForEcnTD3(acl_table_id, 1002, 0x00, 0x08, SAI_PACKET_COLOR_GREEN);
++        initAclEntryForEcnTD3(acl_table_id, 1001, 0x00, 0x00, SAI_PACKET_COLOR_GREEN);
++    }
++
+     // Add entry to match packets with dscp=8, ecn=0 and set yellow color to them
+     initAclEntryForEcn(acl_table_id, 1000, 0x00, 0x08, SAI_PACKET_COLOR_YELLOW);
+     // Add entry to match packets with dscp=0, ecn=0 and set yellow color to them
+@@ -671,6 +684,10 @@ sai_object_id_t QosOrch::initSystemAclTable()
+     attr.value.booldata = true;
+     attrs.push_back(attr);
+ 
++    attr.id = SAI_ACL_TABLE_ATTR_FIELD_OUTER_VLAN_CFI;
++    attr.value.booldata = true;
++    attrs.push_back(attr);
++
+     status = sai_acl_api->create_acl_table(&acl_table_id, gSwitchId, (uint32_t)attrs.size(), attrs.data());
+     if (status != SAI_STATUS_SUCCESS)
+     {
+@@ -746,6 +763,57 @@ void QosOrch::initAclEntryForEcn(sai_object_id_t acl_table_id, sai_uint32_t prio
+     gCrmOrch->incCrmAclTableUsedCounter(CrmResourceType::CRM_ACL_ENTRY, acl_table_id);
+ }
+ 
++void QosOrch::initAclEntryForEcnTD3(sai_object_id_t acl_table_id, sai_uint32_t priority,
++                                 sai_uint8_t ecn_field, sai_uint8_t dscp_field, sai_int32_t color)
++{
++    SWSS_LOG_ENTER();
++    vector<sai_attribute_t> attrs;
++    sai_attribute_t attr;
++    sai_object_id_t acl_entry_id;
++    sai_status_t status;
++
++    attr.id = SAI_ACL_ENTRY_ATTR_TABLE_ID;
++    attr.value.oid = acl_table_id;
++    attrs.push_back(attr);
++
++    attr.id = SAI_ACL_ENTRY_ATTR_PRIORITY;
++    attr.value.u32 = priority;
++    attrs.push_back(attr);
++
++    attr.id = SAI_ACL_TABLE_ATTR_FIELD_ECN;
++    attr.value.aclfield.enable = true;
++    attr.value.aclfield.data.u8 = ecn_field;
++    attr.value.aclfield.mask.u8 = 0x3;
++    attrs.push_back(attr);
++
++    attr.id = SAI_ACL_TABLE_ATTR_FIELD_DSCP;
++    attr.value.aclfield.enable = true;
++    attr.value.aclfield.data.u8 = dscp_field;
++    attr.value.aclfield.mask.u8 = 0x3f;
++    attrs.push_back(attr);
++
++    attr.id = SAI_ACL_TABLE_ATTR_FIELD_OUTER_VLAN_CFI;
++    attr.value.aclfield.enable = true;
++    attr.value.aclfield.data.u8 = 0;
++    attr.value.aclfield.mask.u8 = 0x1;
++    attrs.push_back(attr);
++
++    attr.id = SAI_ACL_ENTRY_ATTR_ACTION_SET_PACKET_COLOR;
++    attr.value.aclaction.enable = true;
++    attr.value.aclaction.parameter.s32 = color;
++    attrs.push_back(attr);
++
++    status = sai_acl_api->create_acl_entry(&acl_entry_id, gSwitchId, (uint32_t)attrs.size(), attrs.data());
++    if (status != SAI_STATUS_SUCCESS)
++    {
++        SWSS_LOG_ERROR("Failed to create a system ACL entry for ECN coloring, rv=%d", status);
++        throw runtime_error("Failed to create a system ACL entry for ECN coloring");
++    }
++    SWSS_LOG_NOTICE("Create a system ACL entry for ECN coloring (TD3 id: 0x%jx)",acl_entry_id);
++
++    gCrmOrch->incCrmAclTableUsedCounter(CrmResourceType::CRM_ACL_ENTRY, acl_table_id);
++}
++
+ void QosOrch::initTableHandlers()
+ {
+     SWSS_LOG_ENTER();
+diff --git a/orchagent/qosorch.h b/orchagent/qosorch.h
+index 03b70a7..158bd3a 100644
+--- a/orchagent/qosorch.h
++++ b/orchagent/qosorch.h
+@@ -121,6 +121,8 @@ private:
+     sai_object_id_t initSystemAclTable();
+     void initAclEntryForEcn(sai_object_id_t acl_table_id, sai_uint32_t priority,
+                             sai_uint8_t ecn_field, sai_uint8_t dscp_field, sai_int32_t color);
++    void initAclEntryForEcnTD3(sai_object_id_t acl_table_id, sai_uint32_t priority,
++                            sai_uint8_t ecn_field, sai_uint8_t dscp_field, sai_int32_t color);
+ 
+     void initTableHandlers();
+ 
+-- 
+2.1.4
+
