@@ -1,0 +1,56 @@
+From 7671ea6c7bae5e90b5c77942eb0c1dc2bd3de55b Mon Sep 17 00:00:00 2001
+From: James Huang <huang.james@inventec.com>
+Date: Wed, 3 Apr 2019 14:56:47 +0800
+Subject: [PATCH] Enhance the SFP/QSFP 'Connector type' and 'Extended
+ RateSelect Compliance' definitions
+
+---
+ sonic_sfp/sff8436.py | 9 +++++++--
+ sonic_sfp/sff8472.py | 4 +++-
+ 2 files changed, 10 insertions(+), 3 deletions(-)
+
+diff --git a/sonic_sfp/sff8436.py b/sonic_sfp/sff8436.py
+index 5fb6eff..db23298 100644
+--- a/sonic_sfp/sff8436.py
++++ b/sonic_sfp/sff8436.py
+@@ -259,7 +259,8 @@ class sff8436InterfaceId(sffbase):
+             '20': 'HSSDC II',
+             '21': 'Copper pigtail',
+             '22': 'RJ45',
+-            '23': 'No separable connector'
++            '23': 'No separable connector',
++            '24': 'MXC'
+             }
+ 
+     encoding_codes = {
+@@ -273,7 +274,11 @@ class sff8436InterfaceId(sffbase):
+             '07': '256B257B'
+             }
+ 
+-    rate_identifier = {'00':'QSFP+ Rate Select Version 1'}
++    rate_identifier = {
++            '00':'QSFP+ Rate Select Version 1',
++            '01':'QSFP+ Rate Select Version 1',
++            '02':'QSFP+ Rate Select Version 2'
++            }
+ 
+     interface_id = {'Identifier':
+                 {'offset':0,
+diff --git a/sonic_sfp/sff8472.py b/sonic_sfp/sff8472.py
+index 6a37597..43764aa 100644
+--- a/sonic_sfp/sff8472.py
++++ b/sonic_sfp/sff8472.py
+@@ -296,7 +296,9 @@ class sff8472InterfaceId(sffbase):
+              '0C': 'MPO Parallel Optic',
+              '20': 'HSSDCII',
+              '21': 'CopperPigtail',
+-             '22': 'RJ45'}
++             '22': 'RJ45',
++             '23': 'No separable connector',
++             '24': 'MXC'}
+ 
+     encoding_codes = {'00':'Unspecified',
+               '01':'8B/10B',
+-- 
+2.1.4
+
