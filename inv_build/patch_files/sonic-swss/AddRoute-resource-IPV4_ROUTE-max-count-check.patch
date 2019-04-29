@@ -1,0 +1,114 @@
+From 3296ad9597398dec42e314d0e7ecf80b98ce6df7 Mon Sep 17 00:00:00 2001
+From: Wilson Lo <lo.wilson@inventec.com>
+Date: Thu, 25 Oct 2018 18:48:10 -0700
+Subject: [PATCH] AddRoute resource IPV4_ROUTE max count check
+
+---
+ orchagent/crmorch.cpp   | 51 +++++++++++++++++++++++++++++++++++++++++++++++++
+ orchagent/crmorch.h     |  1 +
+ orchagent/routeorch.cpp | 15 +++++++++++++++
+ 3 files changed, 67 insertions(+)
+
+diff --git a/orchagent/crmorch.cpp b/orchagent/crmorch.cpp
+index ab6c0b7..a55919b 100644
+--- a/orchagent/crmorch.cpp
++++ b/orchagent/crmorch.cpp
+@@ -279,6 +279,57 @@ void CrmOrch::handleSetCommand(const string& key, const vector<FieldValueTuple>&
+     }
+ }
+ 
++bool CrmOrch::isRunOutOfCrmRes(CrmResourceType resource)
++{
++    SWSS_LOG_ENTER();
++
++    sai_attribute_t attr;
++    uint32_t reservedCounter = 0;
++
++    switch (resource)
++    {
++        case CrmResourceType::CRM_IPV4_ROUTE:
++            attr.id = SAI_SWITCH_ATTR_AVAILABLE_IPV4_ROUTE_ENTRY;
++            reservedCounter = 10;
++            break;
++        default:
++            SWSS_LOG_ERROR("Failed to get CRM resource type %u. Unknown type.\n", resource);
++            return true;
++    }
++
++    sai_status_t status = sai_switch_api->get_switch_attribute(gSwitchId, 1, &attr);
++    if (status != SAI_STATUS_SUCCESS)
++    {
++        SWSS_LOG_ERROR("Failed to get switch attribute %u to check, rv:%d", attr.id, status);
++        return true;
++    }
++
++    try
++    {
++        SWSS_LOG_DEBUG("isRunOutOfCrmRes() resource %s - used count %u, free count %u, realtime free count %u",
++                       crmResTypeNameMap.at(resource).c_str(),
++                       m_resourcesMap.at(resource).countersMap[CRM_COUNTERS_TABLE_KEY].usedCounter,
++                       m_resourcesMap.at(resource).countersMap[CRM_COUNTERS_TABLE_KEY].availableCounter,
++                       attr.value.u32);
++        if (attr.value.u32 <= reservedCounter)
++        {
++            SWSS_LOG_ERROR("Run out of resource %s - used count %u, free count %u, realtime free count %u, reserved(not available) count %u",
++                       crmResTypeNameMap.at(resource).c_str(),
++                       m_resourcesMap.at(resource).countersMap[CRM_COUNTERS_TABLE_KEY].usedCounter,
++                       m_resourcesMap.at(resource).countersMap[CRM_COUNTERS_TABLE_KEY].availableCounter,
++                       attr.value.u32, reservedCounter);
++            return false;
++        }
++    }
++    catch (...)
++    {
++        SWSS_LOG_ERROR("Failed to check counter for the %s CRM resource.", crmResTypeNameMap.at(resource).c_str());
++        return true;
++    }
++    return true;
++}
++
++
+ void CrmOrch::incCrmResUsedCounter(CrmResourceType resource)
+ {
+     SWSS_LOG_ENTER();
+diff --git a/orchagent/crmorch.h b/orchagent/crmorch.h
+index fd85034..d5a0ff3 100644
+--- a/orchagent/crmorch.h
++++ b/orchagent/crmorch.h
+@@ -38,6 +38,7 @@ class CrmOrch : public Orch
+ {
+ public:
+     CrmOrch(DBConnector *db, string tableName);
++    bool isRunOutOfCrmRes(CrmResourceType resource);
+     void incCrmResUsedCounter(CrmResourceType resource);
+     void decCrmResUsedCounter(CrmResourceType resource);
+     // Increment "used" counter for the ACL table/group CRM resources
+diff --git a/orchagent/routeorch.cpp b/orchagent/routeorch.cpp
+index 18e8d61..1442d49 100644
+--- a/orchagent/routeorch.cpp
++++ b/orchagent/routeorch.cpp
+@@ -791,6 +791,21 @@ bool RouteOrch::addRoute(IpPrefix ipPrefix, IpAddresses nextHops)
+      */
+     if (it_route == m_syncdRoutes.end())
+     {
++        if (route_entry.destination.addr_family == SAI_IP_ADDR_FAMILY_IPV4)
++        {
++            if (!gCrmOrch->isRunOutOfCrmRes(CrmResourceType::CRM_IPV4_ROUTE))
++            {
++                SWSS_LOG_ERROR("Resource ipv4_route table full. Failed to create route %s with next hop(s) %s",
++                        ipPrefix.to_string().c_str(), nextHops.to_string().c_str());
++                /* Clean up the newly created next hop group entry */
++                if (nextHops.getSize() > 1)
++                {
++                    removeNextHopGroup(nextHops);
++                }
++                return false;
++            }
++        }
++
+         route_attr.id = SAI_ROUTE_ENTRY_ATTR_NEXT_HOP_ID;
+         route_attr.value.oid = next_hop_id;
+ 
+-- 
+2.7.4
+

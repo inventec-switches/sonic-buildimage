@@ -1,0 +1,175 @@
+From ea69013b18fdc0b646d05a7fbefb7d1a0339eb32 Mon Sep 17 00:00:00 2001
+From: Clare Lu <lu.clare@inventec.com>
+Date: Thu, 15 Nov 2018 17:20:14 +0800
+Subject: [PATCH] Check CRM Available Count for Creating Ingress stage
+ ACL TABLE
+
+---
+ orchagent/aclorch.cpp   |  5 ++++
+ orchagent/crmorch.cpp   | 72 ++++++++++++++++++++++++++++++++++++++++---------
+ orchagent/crmorch.h     |  2 +-
+ orchagent/routeorch.cpp |  2 +-
+ 4 files changed, 67 insertions(+), 14 deletions(-)
+
+diff --git a/orchagent/aclorch.cpp b/orchagent/aclorch.cpp
+index f8562c5..686c32c 100644
+--- a/orchagent/aclorch.cpp
++++ b/orchagent/aclorch.cpp
+@@ -1112,6 +1112,11 @@ bool AclTable::create()
+         table_attrs.push_back(attr);
+     }
+ 
++    if(!gCrmOrch->hasEnoughCrmRes(CrmResourceType::CRM_ACL_TABLE))
++    {
++        return false;
++    }
++
+     sai_status_t status = sai_acl_api->create_acl_table(&m_oid, gSwitchId, (uint32_t)table_attrs.size(), table_attrs.data());
+ 
+     if (status == SAI_STATUS_SUCCESS)
+diff --git a/orchagent/crmorch.cpp b/orchagent/crmorch.cpp
+index 76e0ed3..ca37fb2 100644
+--- a/orchagent/crmorch.cpp
++++ b/orchagent/crmorch.cpp
+@@ -280,12 +280,22 @@ void CrmOrch::handleSetCommand(const string& key, const vector<FieldValueTuple>&
+     }
+ }
+ 
+-bool CrmOrch::isRunOutOfCrmRes(CrmResourceType resource)
++bool CrmOrch::hasEnoughCrmRes(CrmResourceType resource)
+ {
+     SWSS_LOG_ENTER();
+ 
+     sai_attribute_t attr;
+     uint32_t reservedCounter = 0;
++    /*
++      BCM56960 IFP is composed of 12 physical slices
++      Each Double-mode ACL TABLE consumes 2 slices
++      By design, slice number 8 is skipped in brcm_sai_get_switch_attribute
++      This causes insufficient resources (slices) to create a table when there is only 1 slice left
++      Hence, the number of acl table can be created will be one less than the available count
++    */
++    const uint32_t reservedAclAvailableCounter = 1;
++    bool bHasResource = true;
++    vector<sai_acl_resource_t> resources(CRM_ACL_RESOURCE_COUNT);
+ 
+     switch (resource)
+     {
+@@ -293,16 +303,29 @@ bool CrmOrch::isRunOutOfCrmRes(CrmResourceType resource)
+             attr.id = SAI_SWITCH_ATTR_AVAILABLE_IPV4_ROUTE_ENTRY;
+             reservedCounter = 10;
+             break;
++        case CrmResourceType::CRM_ACL_TABLE: 
++            attr.id = SAI_SWITCH_ATTR_AVAILABLE_ACL_TABLE;
++            attr.value.aclresource.count = CRM_ACL_RESOURCE_COUNT;
++            attr.value.aclresource.list = resources.data();
++            break;
+         default:
+             SWSS_LOG_ERROR("Failed to get CRM resource type %u. Unknown type.\n", resource);
+-            return true;
++            return bHasResource;
+     }
+ 
+     sai_status_t status = sai_switch_api->get_switch_attribute(gSwitchId, 1, &attr);
++
++    if((resource == CrmResourceType::CRM_ACL_TABLE) && (status == SAI_STATUS_BUFFER_OVERFLOW))
++    {
++        resources.resize(attr.value.aclresource.count);
++        attr.value.aclresource.list = resources.data();
++        status = sai_switch_api->get_switch_attribute(gSwitchId, 1, &attr);
++    }
++
+     if (status != SAI_STATUS_SUCCESS)
+     {
+         SWSS_LOG_ERROR("Failed to get switch attribute %u to check, rv:%d", attr.id, status);
+-        return true;
++        return bHasResource;
+     }
+ 
+     try
+@@ -312,22 +335,47 @@ bool CrmOrch::isRunOutOfCrmRes(CrmResourceType resource)
+                        m_resourcesMap.at(resource).countersMap[CRM_COUNTERS_TABLE_KEY].usedCounter,
+                        m_resourcesMap.at(resource).countersMap[CRM_COUNTERS_TABLE_KEY].availableCounter,
+                        attr.value.u32);
+-        if (attr.value.u32 <= reservedCounter)
++
++        switch(resource)
+         {
+-            SWSS_LOG_ERROR("Run out of resource %s - used count %u, free count %u, realtime free count %u, reserved(not available) count %u",
+-                       crmResTypeNameMap.at(resource).c_str(),
+-                       m_resourcesMap.at(resource).countersMap[CRM_COUNTERS_TABLE_KEY].usedCounter,
+-                       m_resourcesMap.at(resource).countersMap[CRM_COUNTERS_TABLE_KEY].availableCounter,
+-                       attr.value.u32, reservedCounter);
+-            return false;
++            case CrmResourceType::CRM_IPV4_ROUTE:
++                if (attr.value.u32 <= reservedCounter)
++                {
++                    SWSS_LOG_ERROR("Run out of resource %s - used count %u, free count %u, realtime free count %u, reserved(not available) count %u",
++                               crmResTypeNameMap.at(resource).c_str(),
++                               m_resourcesMap.at(resource).countersMap[CRM_COUNTERS_TABLE_KEY].usedCounter,
++                               m_resourcesMap.at(resource).countersMap[CRM_COUNTERS_TABLE_KEY].availableCounter,
++                               attr.value.u32, reservedCounter);
++                    bHasResource = false;
++                }
++                break;
++
++           case CrmResourceType::CRM_ACL_TABLE:
++               for (uint32_t i = 0; i < attr.value.aclresource.count; i++)
++               {
++                   if((attr.value.aclresource.list[i].stage == SAI_ACL_STAGE_INGRESS) && (attr.value.aclresource.list[i].bind_point == SAI_ACL_BIND_POINT_TYPE_PORT))
++                   {
++                       if(attr.value.aclresource.list[i].avail_num <= reservedAclAvailableCounter)
++                       {
++                           bHasResource = false;
++                           break;
++                       }
++                   }
++               }
++               break;
++           
++           default:
++               SWSS_LOG_ERROR("Failed to get CRM resource type %u. Unknown type.\n", resource);
++               break; 
+         }
+     }
+     catch (...)
+     {
+         SWSS_LOG_ERROR("Failed to check counter for the %s CRM resource.", crmResTypeNameMap.at(resource).c_str());
+-        return true;
++        return bHasResource;
+     }
+-    return true;
++
++    return bHasResource;
+ }
+ 
+ 
+diff --git a/orchagent/crmorch.h b/orchagent/crmorch.h
+index d5a0ff3..a12beed 100644
+--- a/orchagent/crmorch.h
++++ b/orchagent/crmorch.h
+@@ -38,7 +38,7 @@ class CrmOrch : public Orch
+ {
+ public:
+     CrmOrch(DBConnector *db, string tableName);
+-    bool isRunOutOfCrmRes(CrmResourceType resource);
++    bool hasEnoughCrmRes(CrmResourceType resource);
+     void incCrmResUsedCounter(CrmResourceType resource);
+     void decCrmResUsedCounter(CrmResourceType resource);
+     // Increment "used" counter for the ACL table/group CRM resources
+diff --git a/orchagent/routeorch.cpp b/orchagent/routeorch.cpp
+index 1442d49..f8a4dd7 100644
+--- a/orchagent/routeorch.cpp
++++ b/orchagent/routeorch.cpp
+@@ -793,7 +793,7 @@ bool RouteOrch::addRoute(IpPrefix ipPrefix, IpAddresses nextHops)
+     {
+         if (route_entry.destination.addr_family == SAI_IP_ADDR_FAMILY_IPV4)
+         {
+-            if (!gCrmOrch->isRunOutOfCrmRes(CrmResourceType::CRM_IPV4_ROUTE))
++            if (!gCrmOrch->hasEnoughCrmRes(CrmResourceType::CRM_IPV4_ROUTE))
+             {
+                 SWSS_LOG_ERROR("Resource ipv4_route table full. Failed to create route %s with next hop(s) %s",
+                         ipPrefix.to_string().c_str(), nextHops.to_string().c_str());
+-- 
+2.1.4
+

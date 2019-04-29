@@ -2,4 +2,6 @@
 [CodeBase] 902239ad4c67c8e85da296b00badbc08b9820001
 # Please note the order in sequence
 [order]
+AddRoute-resource-IPV4_ROUTE-max-count-check.patch
+check_crm_acltable_ingress_port_available_count.patch
 portsorch-Add-lag-name-and-oid-map-to-the-counter-ta.patch
