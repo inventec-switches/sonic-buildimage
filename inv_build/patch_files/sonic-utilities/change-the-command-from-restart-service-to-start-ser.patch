@@ -1,0 +1,25 @@
+From 7ad21abc3f5aa86adce8157b847a3b9942a65bce Mon Sep 17 00:00:00 2001
+From: James Huang <huang.james@inventec.com>
+Date: Mon, 3 Dec 2018 14:43:56 +0800
+Subject: [PATCH] change the command from 'restart service' to 'start service'
+
+---
+ config/main.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/config/main.py b/config/main.py
+index 9d65c3f..afdf9db 100755
+--- a/config/main.py
++++ b/config/main.py
+@@ -167,7 +167,7 @@ def _restart_services():
+         'dhcp_relay',
+     ]
+     for service in services:
+-        run_command("systemctl restart %s" % service, display_cmd=True)
++        run_command("systemctl start %s" % service, display_cmd=True)
+ 
+ 
+ # This is our main entrypoint - the main 'config' command
+-- 
+2.1.4
+
