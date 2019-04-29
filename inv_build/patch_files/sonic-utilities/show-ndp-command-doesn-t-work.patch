@@ -1,0 +1,25 @@
+From 6c86bf9bb713aa862a1ab99591de3054746bc146 Mon Sep 17 00:00:00 2001
+From: Dada Shih <shih.dada@inventec.com>
+Date: Wed, 13 Feb 2019 17:29:55 +0800
+Subject: [PATCH] show ndp command doesn't work
+
+---
+ show/main.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/show/main.py b/show/main.py
+index 89feefe..6ef8607 100755
+--- a/show/main.py
++++ b/show/main.py
+@@ -176,7 +176,7 @@ def arp(ipaddress, verbose):
+ @cli.command()
+ @click.argument('ip6address', required=False)
+ @click.option('--verbose', is_flag=True, help="Enable verbose output")
+-def ndp(ip6address):
++def ndp(ip6address, verbose):
+     """Show IPv6 Neighbour table"""
+     cmd = "/bin/ip -6 neigh show"
+ 
+-- 
+2.1.4
+
