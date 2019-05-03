@@ -316,14 +316,18 @@ class SfpUtil(SfpUtilBase):
             # temperature
             try:
                 with open( "{0}/temperature".format(path), 'rb') as readPtr:
-                    dom_info_dict['temperature'] = readPtr.read().replace('\n', '')
+                    temperature = re.search(r"(?P<temp>\d+\.\d+)",readPtr.read().replace('\n',''))
+                    if temperature is not None:
+                        dom_info_dict['temperature'] = temperature.group("temp")
             except:
                 pass
     
             # voltage
             try:
                 with open( "{0}/voltage".format(path), 'rb') as readPtr:
-                    dom_info_dict['voltage'] = readPtr.read().replace('\n', '')
+                    voltage = re.search(r"(?P<volt>\d+\.\d+)",readPtr.read().replace('\n',''))
+                    if voltage is not None:
+                        dom_info_dict['voltage'] = voltage.group("volt")
             except:
                 pass
     
