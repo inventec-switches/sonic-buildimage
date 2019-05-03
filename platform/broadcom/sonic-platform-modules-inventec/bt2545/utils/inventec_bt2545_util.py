@@ -168,43 +168,49 @@ def system_install():
             if FORCE == 0:
                 return status
     for i in range(22,30):
-        status, output =exec_cmd("echo sff8436 0x50 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-7/i2c-"+str(i)+"/new_device", 1)
-        status, output =exec_cmd("echo sff8436 0x51 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-7/i2c-"+str(i)+"/new_device", 1)
+        status, output =exec_cmd("echo optoe2 0x50 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-7/i2c-"+str(i)+"/new_device", 1)
+        #status, output =exec_cmd("echo sff8436 0x50 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-7/i2c-"+str(i)+"/new_device", 1)
+        #status, output =exec_cmd("echo sff8436 0x51 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-7/i2c-"+str(i)+"/new_device", 1)
         if status:
             print output
             if FORCE == 0:
                 return status
     for i in range(30,38):
-        status, output =exec_cmd("echo sff8436 0x50 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-8/i2c-"+str(i)+"/new_device", 1)
-        status, output =exec_cmd("echo sff8436 0x51 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-8/i2c-"+str(i)+"/new_device", 1)
+        status, output =exec_cmd("echo optoe2 0x50 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-8/i2c-"+str(i)+"/new_device", 1)
+        #status, output =exec_cmd("echo sff8436 0x50 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-8/i2c-"+str(i)+"/new_device", 1)
+        #status, output =exec_cmd("echo sff8436 0x51 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-8/i2c-"+str(i)+"/new_device", 1)
         if status:
             print output
             if FORCE == 0:
                 return status
     for i in range(38,46):
-        status, output =exec_cmd("echo sff8436 0x50 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-9/i2c-"+str(i)+"/new_device", 1)
-        status, output =exec_cmd("echo sff8436 0x51 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-9/i2c-"+str(i)+"/new_device", 1)
+        status, output =exec_cmd("echo optoe2 0x50 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-9/i2c-"+str(i)+"/new_device", 1)
+        #status, output =exec_cmd("echo sff8436 0x50 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-9/i2c-"+str(i)+"/new_device", 1)
+        #status, output =exec_cmd("echo sff8436 0x51 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-9/i2c-"+str(i)+"/new_device", 1)
         if status:
             print output
             if FORCE == 0:
                 return status
     for i in range(46,54):
-        status, output =exec_cmd("echo sff8436 0x50 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-10/i2c-"+str(i)+"/new_device", 1)
-        status, output =exec_cmd("echo sff8436 0x51 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-10/i2c-"+str(i)+"/new_device", 1)
+        status, output =exec_cmd("echo optoe2 0x50 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-10/i2c-"+str(i)+"/new_device", 1)
+        #status, output =exec_cmd("echo sff8436 0x50 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-10/i2c-"+str(i)+"/new_device", 1)
+        #status, output =exec_cmd("echo sff8436 0x51 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-10/i2c-"+str(i)+"/new_device", 1)
         if status:
             print output
             if FORCE == 0:
                 return status
     for i in range(54,62):
-        status, output =exec_cmd("echo sff8436 0x50 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-11/i2c-"+str(i)+"/new_device", 1)
-        status, output =exec_cmd("echo sff8436 0x51 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-11/i2c-"+str(i)+"/new_device", 1)
+        status, output =exec_cmd("echo optoe2 0x50 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-11/i2c-"+str(i)+"/new_device", 1)
+        #status, output =exec_cmd("echo sff8436 0x50 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-11/i2c-"+str(i)+"/new_device", 1)
+        #status, output =exec_cmd("echo sff8436 0x51 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-11/i2c-"+str(i)+"/new_device", 1)
         if status:
             print output
             if FORCE == 0:
                 return status
     for i in range(62,70):
-        status, output =exec_cmd("echo sff8436 0x50 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-12/i2c-"+str(i)+"/new_device", 1)
-        status, output =exec_cmd("echo sff8436 0x51 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-12/i2c-"+str(i)+"/new_device", 1)
+        status, output =exec_cmd("echo optoe2 0x50 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-12/i2c-"+str(i)+"/new_device", 1)
+        #status, output =exec_cmd("echo sff8436 0x50 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-12/i2c-"+str(i)+"/new_device", 1)
+        #status, output =exec_cmd("echo sff8436 0x51 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-12/i2c-"+str(i)+"/new_device", 1)
         if status:
             print output
             if FORCE == 0:

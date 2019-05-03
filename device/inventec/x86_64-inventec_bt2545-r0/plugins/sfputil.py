@@ -5,10 +5,59 @@
 
 try:
     import time
+    import socket, re,os
+    from collections import OrderedDict
     from sonic_sfp.sfputilbase import SfpUtilBase
 except ImportError as e:
     raise ImportError("%s - required module not found" % str(e))
 
+NETLINK_KOBJECT_UEVENT = 15
+monitor = None
+
+class SWPSEventMonitor(object):
+
+    def __init__(self):
+        self.recieved_events = OrderedDict()
+        self.socket = socket.socket(
+            socket.AF_NETLINK, socket.SOCK_DGRAM, NETLINK_KOBJECT_UEVENT)
+
+    def start(self):
+        self.socket.bind((os.getpid(), -1))
+
+    def stop(self):
+        self.socket.close()
+
+    def __enter__(self):
+        self.start()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.stop()
+
+    def __iter__(self):
+        global monitor
+        while True:
+            for item in monitor.next_events():
+                yield item
+
+    def next_events(self):
+        data = self.socket.recv(16384)
+        event = {}
+        for item in data.split(b'\x00'):
+            if not item:
+                # check if we have an event and if we already received it
+                if event and event['SEQNUM'] not in self.recieved_events:
+                    self.recieved_events[event['SEQNUM']] = None
+                    if (len(self.recieved_events) > 100):
+                        self.recieved_events.popitem(last=False)
+                    yield event
+                event = {}
+            else:
+                try:
+                    k, v = item.split(b'=', 1)
+                    event[k.decode('ascii')] = v.decode('ascii')
+                except ValueError:
+                    pass
 
 class SfpUtil(SfpUtilBase):
     """Platform-specific SfpUtil class"""
@@ -18,6 +67,8 @@ class SfpUtil(SfpUtilBase):
     PORTS_IN_BLOCK = 56
     QSFP_PORT_START = 48
     QSFP_PORT_END = 55
+
+    SWPS_FOLDER = "/sys/class/swps/"
 
     _port_to_eeprom_mapping = {}
     port_to_i2c_mapping = {
@@ -138,7 +189,7 @@ class SfpUtil(SfpUtilBase):
             return False
 
         try:
-            reg_file = open("/sys/class/swps/port"+str(port_num)+"/lpmod")
+            reg_file = open("/sys/class/swps/port"+str(port_num+1)+"/lpmod")
         except IOError as e:
             print "Error: unable to open file: %s" % str(e)
 
@@ -158,7 +209,7 @@ class SfpUtil(SfpUtilBase):
             return False
 
         try:
-            reg_file = open("/sys/class/swps/port"+str(port_num)+"/lpmod", "r+")
+            reg_file = open("/sys/class/swps/port"+str(port_num+1)+"/lpmod", "r+")
         except IOError as e:
             print "Error: unable to open file: %s" % str(e)
             return False
@@ -177,7 +228,7 @@ class SfpUtil(SfpUtilBase):
         return True
 
     def reset(self, port_num):
-        QSFP_RESET_REGISTER_DEVICE_FILE = "/sys/class/swps/port"+str(port_num)+"/reset"
+        QSFP_RESET_REGISTER_DEVICE_FILE = "/sys/class/swps/port"+str(port_num+1)+"/reset"
         # Check for invalid port_num
         if port_num < self.port_start or port_num > self.port_end:
             return False
@@ -212,7 +263,105 @@ class SfpUtil(SfpUtilBase):
         return True
 
     def get_transceiver_change_event(self):
-        """
-        TODO: This function need to be implemented
-        """
-        raise NotImplementedError
+        #"""
+        #TODO: This function need to be implemented
+        #"""
+        #raise NotImplementedError
+        global monitor
+        port_dict = {}
+        with SWPSEventMonitor() as monitor:
+            for event in monitor:
+                if event['SUBSYSTEM'] == 'swps':
+                    #print('SWPS event. From %s, ACTION %s, IF_TYPE %s, IF_LANE %s' % (event['DEVPATH'], event['ACTION'], event['IF_TYPE'], event['IF_LANE']))
+                    portname = event['DEVPATH'].split("/")[-1]
+                    rc = re.match(r"port(?P<num>\d+)",portname)
+                    if rc is not None:
+                        if event['ACTION'] == "remove":
+                            remove_num = int(rc.group("num")) -1
+                            port_dict[remove_num] = "0"
+                            #port_dict[rc.group("num")] = "0"
+                        if event['ACTION'] == "add":
+                            add_num = int(rc.group("num")) -1
+                            port_dict[add_num] = "1"
+                            #port_dict[rc.group("num")] = "1"
+                        return True, port_dict
+                    return False, {}
+
+    def get_transceiver_dom_info_dict(self, port_num):
+        import re
+        dom_info_dict = {}
+        # initial all entires
+        dom_info_dict['temperature'] = "N/A"
+        dom_info_dict['voltage'] = "N/A"
+        dom_info_dict['rx1power'] = "-inf"
+        dom_info_dict['rx2power'] = "-inf"
+        dom_info_dict['rx3power'] = "-inf"
+        dom_info_dict['rx4power'] = "-inf"
+        dom_info_dict['tx1bias'] = "N/A"
+        dom_info_dict['tx2bias'] = "N/A"
+        dom_info_dict['tx3bias'] = "N/A"
+        dom_info_dict['tx4bias'] = "N/A"
+        dom_info_dict['tx1power'] = "-inf"
+        dom_info_dict['tx2power'] = "-inf"
+        dom_info_dict['tx3power'] = "-inf"
+        dom_info_dict['tx4power'] = "-inf"
+        dom_info_dict['wavelength'] = "N/A"
+        dom_info_dict['rx_am'] = "N/A"
+    
+        file_list = os.listdir(self.SWPS_FOLDER)
+        portname = "port{0}".format(port_num + 1)
+        if portname in os.listdir(self.SWPS_FOLDER):
+            path = "{0}{1}".format(self.SWPS_FOLDER,portname)
+    
+            # temperature
+            try:
+                with open( "{0}/temperature".format(path), 'rb') as readPtr:
+                    dom_info_dict['temperature'] = readPtr.read().replace('\n', '')
+            except:
+                pass
+    
+            # voltage
+            try:
+                with open( "{0}/voltage".format(path), 'rb') as readPtr:
+                    dom_info_dict['voltage'] = readPtr.read().replace('\n', '')
+            except:
+                pass
+    
+            # rx_power
+            try:
+                with open( "{0}/rx_power".format(path), 'rb') as readPtr:
+                    count = 1
+                    for line in readPtr:
+                        power = re.search(r"(RX\-[1234]\:)*(?P<rx>\d+\.\d+)", line)
+                        if power is not None:
+                            dom_info_dict['rx{0}power'.format(count)] = power.group("rx")
+                            count = count + 1
+            except:
+                pass
+    
+            # tx_bias
+            try:
+                with open( "{0}/tx_bias".format(path), 'rb') as readPtr:
+                    count = 1
+                    for line in readPtr:
+                        bias = re.search(r"(TX\-[1234]\:)*(?P<bias>\d+\.\d+)", line)
+                        if bias is not None:
+                            dom_info_dict['tx{0}bias'.format(count)] = bias.group("bias")
+                            count = count + 1
+            except:
+                pass
+    
+            # tx_power
+            try:
+                with open( "{0}/tx_power".format(path), 'rb') as readPtr:
+                    count = 1
+                    for line in readPtr:
+                        power = re.search(r"(TX\-[1234]\:)*(?P<tx>\d+\.\d+)", line)
+                        if power is not None:
+                            dom_info_dict['tx{0}power'.format(count)] = power.group("tx")
+                            count = count + 1
+            except:
+                pass
+    
+        return dom_info_dict
+    
