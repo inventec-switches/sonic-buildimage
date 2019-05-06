@@ -296,9 +296,9 @@ static int __init inv_platform_init(void)
 
 static void __exit inv_platform_exit(void)
 {
+        plat_i2c_client_remove_all();
 	device_i2c_gpio0->dev.platform_data = NULL;
 	platform_device_unregister(device_i2c_gpio0);
-        plat_i2c_client_remove_all();
 }
 
 module_init(inv_platform_init);
