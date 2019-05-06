@@ -8,8 +8,16 @@ try:
     import socket, re,os
     from collections import OrderedDict
     from sonic_sfp.sfputilbase import SfpUtilBase
+    from sonic_sfp.sff8472 import sff8472Dom
 except ImportError as e:
     raise ImportError("%s - required module not found" % str(e))
+
+SFP_TEMPE_OFFSET = 96
+SFP_TEMPE_WIDTH = 2
+SFP_VLOT_OFFSET = 98
+SFP_VOLT_WIDTH = 2
+SFP_CHANNL_MON_OFFSET = 100
+SFP_CHANNL_MON_WIDTH = 6
 
 NETLINK_KOBJECT_UEVENT = 15
 monitor = None
@@ -288,84 +296,63 @@ class SfpUtil(SfpUtilBase):
                     return False, {}
 
     def get_transceiver_dom_info_dict(self, port_num):
-        import re
-        dom_info_dict = {}
-        # initial all entires
-        dom_info_dict['temperature'] = "N/A"
-        dom_info_dict['voltage'] = "N/A"
-        dom_info_dict['rx1power'] = "-inf"
-        dom_info_dict['rx2power'] = "-inf"
-        dom_info_dict['rx3power'] = "-inf"
-        dom_info_dict['rx4power'] = "-inf"
-        dom_info_dict['tx1bias'] = "N/A"
-        dom_info_dict['tx2bias'] = "N/A"
-        dom_info_dict['tx3bias'] = "N/A"
-        dom_info_dict['tx4bias'] = "N/A"
-        dom_info_dict['tx1power'] = "-inf"
-        dom_info_dict['tx2power'] = "-inf"
-        dom_info_dict['tx3power'] = "-inf"
-        dom_info_dict['tx4power'] = "-inf"
-        dom_info_dict['wavelength'] = "N/A"
-        dom_info_dict['rx_am'] = "N/A"
-    
-        file_list = os.listdir(self.SWPS_FOLDER)
-        portname = "port{0}".format(port_num + 1)
-        if portname in os.listdir(self.SWPS_FOLDER):
-            path = "{0}{1}".format(self.SWPS_FOLDER,portname)
-    
-            # temperature
+        if port_num in self.qsfp_ports:
+            return SfpUtilBase.get_transceiver_dom_info_dict(self, port_num)
+        else:
+            transceiver_dom_info_dict = {}
+            
+            offset = 256
+            file_path = self._get_port_eeprom_path(port_num, self.DOM_EEPROM_ADDR)
+            if not self._sfp_eeprom_present(file_path, 0):
+                return None
+            
             try:
-                with open( "{0}/temperature".format(path), 'rb') as readPtr:
-                    temperature = re.search(r"(?P<temp>\d+\.\d+)",readPtr.read().replace('\n',''))
-                    if temperature is not None:
-                        dom_info_dict['temperature'] = temperature.group("temp")
-            except:
-                pass
-    
-            # voltage
+                sysfsfile_eeprom = open(file_path, "rb")
+            except IOError:
+                print("Error: reading sysfs file %s" % file_path)
+                return None
+            
+            sfpd_obj = sff8472Dom(None, 1)
+            if sfpd_obj is None:
+                return None
+            
+            dom_temperature_raw = self._read_eeprom_specific_bytes(sysfsfile_eeprom, (offset + SFP_TEMPE_OFFSET), SFP_TEMPE_WIDTH)
+            if dom_temperature_raw is not None:
+                dom_temperature_data = sfpd_obj.parse_temperature(dom_temperature_raw, 0)
+            else:
+                return None
+            
+            dom_voltage_raw = self._read_eeprom_specific_bytes(sysfsfile_eeprom, (offset + SFP_VLOT_OFFSET), SFP_VOLT_WIDTH)
+            if dom_voltage_raw is not None:
+                dom_voltage_data = sfpd_obj.parse_voltage(dom_voltage_raw, 0)
+            else:
+                return None
+            
+            dom_channel_monitor_raw = self._read_eeprom_specific_bytes(sysfsfile_eeprom, (offset + SFP_CHANNL_MON_OFFSET), SFP_CHANNL_MON_WIDTH)
+            if dom_channel_monitor_raw is not None:
+                dom_channel_monitor_data = sfpd_obj.parse_channel_monitor_params(dom_channel_monitor_raw, 0)
+            else:
+                return None
+            
             try:
-                with open( "{0}/voltage".format(path), 'rb') as readPtr:
-                    voltage = re.search(r"(?P<volt>\d+\.\d+)",readPtr.read().replace('\n',''))
-                    if voltage is not None:
-                        dom_info_dict['voltage'] = voltage.group("volt")
-            except:
-                pass
-    
-            # rx_power
-            try:
-                with open( "{0}/rx_power".format(path), 'rb') as readPtr:
-                    count = 1
-                    for line in readPtr:
-                        power = re.search(r"(RX\-[1234]\:)*(?P<rx>\d+\.\d+)", line)
-                        if power is not None:
-                            dom_info_dict['rx{0}power'.format(count)] = power.group("rx")
-                            count = count + 1
-            except:
-                pass
-    
-            # tx_bias
-            try:
-                with open( "{0}/tx_bias".format(path), 'rb') as readPtr:
-                    count = 1
-                    for line in readPtr:
-                        bias = re.search(r"(TX\-[1234]\:)*(?P<bias>\d+\.\d+)", line)
-                        if bias is not None:
-                            dom_info_dict['tx{0}bias'.format(count)] = bias.group("bias")
-                            count = count + 1
-            except:
-                pass
-    
-            # tx_power
-            try:
-                with open( "{0}/tx_power".format(path), 'rb') as readPtr:
-                    count = 1
-                    for line in readPtr:
-                        power = re.search(r"(TX\-[1234]\:)*(?P<tx>\d+\.\d+)", line)
-                        if power is not None:
-                            dom_info_dict['tx{0}power'.format(count)] = power.group("tx")
-                            count = count + 1
-            except:
-                pass
-    
-        return dom_info_dict
-    
+                sysfsfile_eeprom.close()
+            except IOError:
+                print("Error: closing sysfs file %s" % file_path)
+                return None
+            
+            transceiver_dom_info_dict['temperature'] = dom_temperature_data['data']['Temperature']['value']
+            transceiver_dom_info_dict['voltage'] = dom_voltage_data['data']['Vcc']['value']
+            transceiver_dom_info_dict['rx1power'] = dom_channel_monitor_data['data']['RXPower']['value']
+            transceiver_dom_info_dict['rx2power'] = 'N/A'
+            transceiver_dom_info_dict['rx3power'] = 'N/A'
+            transceiver_dom_info_dict['rx4power'] = 'N/A'
+            transceiver_dom_info_dict['tx1bias'] = dom_channel_monitor_data['data']['TXBias']['value']
+            transceiver_dom_info_dict['tx2bias'] = 'N/A'
+            transceiver_dom_info_dict['tx3bias'] = 'N/A'
+            transceiver_dom_info_dict['tx4bias'] = 'N/A'
+            transceiver_dom_info_dict['tx1power'] = dom_channel_monitor_data['data']['TXPower']['value']
+            transceiver_dom_info_dict['tx2power'] = 'N/A'
+            transceiver_dom_info_dict['tx3power'] = 'N/A'
+            transceiver_dom_info_dict['tx4power'] = 'N/A'
+            
+            return transceiver_dom_info_dict        

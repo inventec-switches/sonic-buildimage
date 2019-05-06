@@ -2188,7 +2188,7 @@ sfp_get_transvr_rx_power(struct transvr_obj_s *self,
     }
     /* Return Unit: 1 mW */
     return _common_count_rx_power(self->curr_rx_power[0],
-                                  self->curr_rx_power[0],
+                                  self->curr_rx_power[1],
                                   buf_p);
 }
 
