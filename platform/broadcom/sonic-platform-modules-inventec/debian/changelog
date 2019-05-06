@@ -1,3 +1,11 @@
+sonic-inventec-platform-modules (1.1.0-4) unstable; urgency=low
+  * support d7264 platform
+  * [psuutil] support d6356 platform
+  * Correct serdes preemphasis value
+  * add a daemon to monitor PSU and FAN status
+
+ -- Huang James <Huang.James@inventec.com>  Mon, 6 May 2019 16:00:00 +0800
+
 sonic-inventec-platform-modules (1.1.0-3) unstable; urgency=low
   * support d6356 platform
 
