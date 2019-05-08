@@ -39,6 +39,7 @@ DEBUG = False
 args = []
 FORCE = 0
 i2c_prefix = '/sys/bus/i2c/devices/'
+fast_reboot_dir = 'host/fast-reboot'
 
 
 if DEBUG == True:
@@ -76,7 +77,9 @@ def main():
             logging.info('no option')
     for arg in args:
         if arg == 'install':
-            install()
+            install(0)
+        elif arg == 'fast-reboot-install':
+            install(1)
         elif arg == 'clean':
             uninstall()
         else:
@@ -131,7 +134,8 @@ drivers =[
 
 
 
-def system_install():
+def system_install(boot_option):
+    ''' boot_option: 0 - normal, 1 - fast-reboot'''
     global FORCE
 
     #remove default drivers to avoid modprobe order conflicts
@@ -145,7 +149,20 @@ def system_install():
 
     #install drivers
     for i in range(0,len(drivers)):
-       status, output = exec_cmd("modprobe "+drivers[i], 1)
+       if drivers[i] == "swps":
+           if boot_option == 1:
+               status, output = exec_cmd("modprobe swps io_no_init=1", 1)
+               # workaround for fast-reboot ACPI issue
+               # SFP tx_disable 0 (link up)
+               set_sfp_attribute("tx_disable", 0)
+
+               # QSFP lpmod 0 (link up)
+               set_qsfp_attribute("lpmod", 0)
+           else:
+               status, output = exec_cmd("modprobe "+drivers[i], 1)
+       else:
+           status, output = exec_cmd("modprobe "+drivers[i], 1)
+
     if status:
 	   print output
 	   if FORCE == 0:
@@ -223,10 +240,11 @@ def system_ready():
         return False
     return True
 
-def install():
+def install(boot_option=0):
+    ''' boot_option: 0 - normal, 1 - fast-reboot '''
     if not device_found():
         print "No device, installing...."
-        status = system_install()
+        status = system_install(boot_option)
         if status:
             if FORCE == 0:
                 return status
@@ -236,15 +254,40 @@ def install():
 
 def uninstall():
     global FORCE
+    #workaround for fast-reboot ACPI issue
+    # SFP tx_disable 1 (link down)
+    set_sfp_attribute("tx_disable", 1)
+     
+    # QSFP lpmod 1 (link down)
+    set_qsfp_attribute("lpmod", 1)
+
     #uninstall drivers
-    exec_cmd("rmmod gpio_ich",1)
     for i in range(len(drivers)-1,-1,-1):
        status, output = exec_cmd("rmmod "+drivers[i], 1)
+    status, output = exec_cmd("rmmod gpio_ich",1)
     if status:
 	   print output
 	   if FORCE == 0:
 	      return status
     return
+
+def set_sfp_attribute(attr, value):
+    ''' For port1 ~ port48  
+        attr  : attribute (ex. tx_disable)
+        value : (ex. 0|1)
+    '''
+    for i in range(1, 49):
+        set_command = "echo {} > /sys/class/swps/port{}/{}".format(value, i, attr)
+        status, output = exec_cmd(set_command, 1)
+
+def set_qsfp_attribute(attr, value):
+    ''' For port49 ~ port56
+        attr  : attribute (ex. lpmod)
+        value : (ex. 0|1)
+    '''
+    for i in range(49, 57):
+        set_command = "echo {} > /sys/class/swps/port{}/{}".format(value, i, attr)
+        status, output = exec_cmd(set_command, 1)
 
 def device_found():
     ret1, log = exec_cmd("ls "+i2c_prefix+"*0072", 0)

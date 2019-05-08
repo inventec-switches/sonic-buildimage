@@ -12,6 +12,9 @@ ExecStart=-/etc/init.d/opennsl-modules-4.9.0-8-amd64 start
 # We could skip this step because we don't expect stopping
 # opennsl service in any context other than rebooting.
 # ExecStop=-/etc/init.d/opennsl-modules-4.9.0-8-amd64 stop
+
+# Workaround for fast-reboot ACPI issue
+ExecStop=-/etc/init.d/platform-modules-bt2545 stop
 RemainAfterExit=yes
 
 [Install]
