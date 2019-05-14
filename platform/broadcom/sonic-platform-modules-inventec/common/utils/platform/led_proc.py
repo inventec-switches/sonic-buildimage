@@ -154,6 +154,9 @@ def _board_init():
 
     elif platform.rstrip() == INV_SEQUOIA:
         BOARD_TPYE = "inventec_d7264q28b"
+        #load prog and remap port order in led_proc_init.soc
+        #led process is controlled by data ram automatically
+        exit(0)
 
     elif platform.rstrip() == INV_MAPLE:
         BOARD_TPYE = "inventec_d6356"

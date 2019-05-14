@@ -79,6 +79,11 @@ def main():
     bcm_obj = BCMUtil()
     log_message( syslog.LOG_INFO, "Object initialed successfully" )
 
+    if bcm_obj.get_platform() == INV_MAPLE_PLATFORM :
+        syslog.closelog()
+        del bcm_obj
+        exit(0)
+
     while 1 :
         try:
             bcm_obj.parsing_asic_temp()
