@@ -1,0 +1,82 @@
+From fe703388de0804341ead4f70a707620dd7fa592f Mon Sep 17 00:00:00 2001
+From: Clare Lu <lu.clare@inventec.com>
+Date: Fri, 17 May 2019 17:06:50 +0800
+Subject: [PATCH] Fix oper status down issue caused by unable to create ACL
+ egress table
+
+---
+ orchagent/aclorch.cpp | 46 +++++++++++++++++++++++++++++++++++++++-------
+ 1 file changed, 39 insertions(+), 7 deletions(-)
+
+diff --git a/orchagent/aclorch.cpp b/orchagent/aclorch.cpp
+index d79f821..700902d 100644
+--- a/orchagent/aclorch.cpp
++++ b/orchagent/aclorch.cpp
+@@ -1090,7 +1090,35 @@ bool AclTable::create()
+     }
+     else
+     {
+-        bpoint_list = { SAI_ACL_BIND_POINT_TYPE_PORT, SAI_ACL_BIND_POINT_TYPE_LAG };
++        set<sai_acl_bind_point_type_t> binds;
++        for (const auto& portid_pair : ports)
++        {
++            Port port;
++            if (!gPortsOrch->getPort(portid_pair.first, port))
++            {
++                continue;
++            }
++    
++            switch (port.m_type)
++            {
++                case Port::PHY:
++                    binds.insert(SAI_ACL_BIND_POINT_TYPE_PORT);
++                    break;
++                case Port::VLAN:
++                    binds.insert(SAI_ACL_BIND_POINT_TYPE_VLAN);
++                    break;
++                case Port::LAG:
++                    binds.insert(SAI_ACL_BIND_POINT_TYPE_LAG);
++                    break;
++                default:
++                    return SAI_STATUS_FAILURE;
++            }
++        }
++    
++        for (auto bind : binds)
++        {
++            bpoint_list.push_back(bind);
++        }
+     }
+ 
+     attr.id = SAI_ACL_TABLE_ATTR_ACL_BIND_POINT_TYPE_LIST;
+@@ -1163,17 +1191,21 @@ bool AclTable::create()
+     attr.value.booldata = true;
+     table_attrs.push_back(attr);
+ 
+-    int32_t range_types_list[] = { SAI_ACL_RANGE_TYPE_L4_DST_PORT_RANGE, SAI_ACL_RANGE_TYPE_L4_SRC_PORT_RANGE };
+-    attr.id = SAI_ACL_TABLE_ATTR_FIELD_ACL_RANGE_TYPE;
+-    attr.value.s32list.count = (uint32_t)(sizeof(range_types_list) / sizeof(range_types_list[0]));
+-    attr.value.s32list.list = range_types_list;
+-    table_attrs.push_back(attr);
+-
++    if(stage == ACL_STAGE_INGRESS)
++    {
++        int32_t range_types_list[] = { SAI_ACL_RANGE_TYPE_L4_DST_PORT_RANGE, SAI_ACL_RANGE_TYPE_L4_SRC_PORT_RANGE };
++        attr.id = SAI_ACL_TABLE_ATTR_FIELD_ACL_RANGE_TYPE;
++        attr.value.s32list.count = (uint32_t)(sizeof(range_types_list) / sizeof(range_types_list[0]));
++        attr.value.s32list.list = range_types_list;
++        table_attrs.push_back(attr);
++    }
++    
+     sai_acl_stage_t acl_stage;
+     attr.id = SAI_ACL_TABLE_ATTR_ACL_STAGE;
+     acl_stage = (stage == ACL_STAGE_INGRESS) ? SAI_ACL_STAGE_INGRESS : SAI_ACL_STAGE_EGRESS;
+     attr.value.s32 = acl_stage;
+     table_attrs.push_back(attr);
++    
+ 
+     if (type == ACL_TABLE_MIRROR)
+     {
+-- 
+2.7.4
+
