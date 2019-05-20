@@ -40,6 +40,15 @@ def get_sonic_version_info():
         data = yaml.load(stream)
     return data
 
+def mac_add(mac):
+    mac = mac.replace(':','')
+    offset = 1
+    mac = "{:012x}".format(int(mac, 16) + offset)
+    if mac == ('ffffffffffff' or 'FFFFFFFFFFFF'):
+        return None
+    mac = ':'.join(mac[i:i+2] for i in range(0, len(mac), 2))
+    return mac
+
 def get_system_mac():
     version_info = get_sonic_version_info()
 
@@ -54,6 +63,9 @@ def get_system_mac():
         return None
 
     mac = mac.strip()
+    mac = mac_add(mac)
+    if mac == None:
+        return None
 
     # Align last byte of MAC if necessary
     if version_info and (version_info['asic_type'] == 'mellanox' or version_info['asic_type'] == 'centec'):
