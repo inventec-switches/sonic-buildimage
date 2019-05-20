@@ -1,0 +1,42 @@
+From cec57f40f9b0460c0b241ae17314dc50284f4971 Mon Sep 17 00:00:00 2001
+From: Clare Lu <lu.clare@inventec.com>
+Date: Mon, 20 May 2019 15:11:03 +0800
+Subject: [PATCH] [Part II] Add 1 to switch mac addr (eth0 mac addr + 1)
+
+---
+ src/sonic-config-engine/sonic_platform.py | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/src/sonic-config-engine/sonic_platform.py b/src/sonic-config-engine/sonic_platform.py
+index 20890d7..f1e9fd9 100644
+--- a/src/sonic-config-engine/sonic_platform.py
++++ b/src/sonic-config-engine/sonic_platform.py
+@@ -40,6 +40,15 @@ def get_sonic_version_info():
+         data = yaml.load(stream)
+     return data
+ 
++def mac_add(mac):
++    mac = mac.replace(':','')
++    offset = 1
++    mac = "{:012x}".format(int(mac, 16) + offset)
++    if mac == ('ffffffffffff' or 'FFFFFFFFFFFF'):
++        return None
++    mac = ':'.join(mac[i:i+2] for i in range(0, len(mac), 2))
++    return mac
++
+ def get_system_mac():
+     version_info = get_sonic_version_info()
+ 
+@@ -54,6 +63,9 @@ def get_system_mac():
+         return None
+ 
+     mac = mac.strip()
++    mac = mac_add(mac)
++    if mac == None:
++        return None
+ 
+     # Align last byte of MAC if necessary
+     if version_info and (version_info['asic_type'] == 'mellanox' or version_info['asic_type'] == 'centec'):
+-- 
+2.7.4
+

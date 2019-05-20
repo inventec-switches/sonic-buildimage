@@ -1,0 +1,6 @@
+Dependency
+
+sonic-buildimage
+  Add-1-to-switch-mac-addr-partI.patch
+  Add-1-to-switch-mac-addr-partII.patch
+  

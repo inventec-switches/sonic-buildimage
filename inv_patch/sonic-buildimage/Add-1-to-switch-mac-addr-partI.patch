@@ -1,0 +1,26 @@
+From e548d00d6b2591662bff177a1344a379cbe80eca Mon Sep 17 00:00:00 2001
+From: Clare Lu <lu.clare@inventec.com>
+Date: Mon, 20 May 2019 14:50:20 +0800
+Subject: [PATCH] Add 1 to switch mac addr (eth0 mac addr + 1)
+
+---
+ dockers/docker-orchagent/orchagent.sh | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/dockers/docker-orchagent/orchagent.sh b/dockers/docker-orchagent/orchagent.sh
+index 9ad3355..21f4293 100755
+--- a/dockers/docker-orchagent/orchagent.sh
++++ b/dockers/docker-orchagent/orchagent.sh
+@@ -4,7 +4,8 @@
+ # vendor specific code.
+ export platform=`sonic-cfggen -y /etc/sonic/sonic_version.yml -v asic_type`
+ 
+-MAC_ADDRESS=`ip link show eth0 | grep ether | awk '{print $2}'`
++#MAC_ADDRESS=`ip link show eth0 | grep ether | awk '{print $2}'`
++MAC_ADDRESS=$(sonic-cfggen -H -v 'DEVICE_METADATA.localhost.mac')
+ 
+ # Create a folder for SwSS record files
+ mkdir -p /var/log/swss
+-- 
+2.7.4
+
