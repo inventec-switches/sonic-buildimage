@@ -15,7 +15,7 @@ except ImportError as e:
 class PsuUtil(PsuBase):
     """Platform-specific PSUutil class"""
 
-    PSU_DIR = "/sys/class/hwmon/hwmon1/device/"
+    PSU_DIR = "/sys/class/hwmon/hwmon2/device/"
 
     def __init__(self):
         PsuBase.__init__(self)
@@ -55,9 +55,9 @@ class PsuUtil(PsuBase):
         status = 0
                   
         if index == 1 :
-            attr_path = "/sys/class/hwmon/hwmon6/in1_input"
-        else :
             attr_path = "/sys/class/hwmon/hwmon7/in1_input"
+        else :
+            attr_path = "/sys/class/hwmon/hwmon8/in1_input"
 
         attr_value = self.get_attr_value(attr_path)
         if (attr_value != 'ERR'):
