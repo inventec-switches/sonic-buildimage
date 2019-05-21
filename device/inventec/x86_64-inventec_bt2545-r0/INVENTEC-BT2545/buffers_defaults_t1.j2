@@ -30,6 +30,14 @@
         }
     },
     "BUFFER_PROFILE": {
+        "ingress_lossless_profile": {
+            "pool":"[BUFFER_POOL|ingress_lossless_pool]",
+            "size":"1248",
+            "dynamic_th":"-4",
+            "xon_offset": "2288",
+            "xon":"2288",
+            "xoff":"56160"
+        },
         "ingress_lossy_profile": {
             "pool":"[BUFFER_POOL|ingress_lossless_pool]",
             "size":"0",
@@ -46,5 +54,24 @@
             "dynamic_th":"3"
         }
     },
+{%- endmacro %}
+
+{%- macro generate_pg_profils(port_names) %}
+    "BUFFER_PG": {
+        "{{ port_names }}|0-1": {
+            "profile" : "[BUFFER_PROFILE|ingress_lossless_profile]"
+        }
+    },
+{%- endmacro %}
+
+{%- macro generate_queue_buffers(port_names) %}
+    "BUFFER_QUEUE": {
+        "{{ port_names }}|3-4": {
+            "profile" : "[BUFFER_PROFILE|egress_lossless_profile]"
+        },
+        "{{ port_names }}|0-1": {
+            "profile" : "[BUFFER_PROFILE|egress_lossy_profile]"
+        }
+    }
 {%- endmacro %}
 
