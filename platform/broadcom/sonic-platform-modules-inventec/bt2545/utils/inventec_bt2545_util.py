@@ -40,7 +40,6 @@ args = []
 FORCE = 0
 i2c_prefix = '/sys/bus/i2c/devices/'
 
-
 if DEBUG == True:
     print sys.argv[0]
     print 'ARGV: ', sys.argv[1:]
@@ -76,7 +75,9 @@ def main():
             logging.info('no option')
     for arg in args:
         if arg == 'install':
-            install()
+            install(0)
+        elif arg == 'fast-reboot-install':
+            install(1)
         elif arg == 'clean':
             uninstall()
         else:
@@ -131,7 +132,8 @@ drivers =[
 
 
 
-def system_install():
+def system_install(boot_option):
+    ''' boot_option: 0 - normal, 1 - fast-reboot'''
     global FORCE
 
     #remove default drivers to avoid modprobe order conflicts
@@ -145,7 +147,14 @@ def system_install():
 
     #install drivers
     for i in range(0,len(drivers)):
-       status, output = exec_cmd("modprobe "+drivers[i], 1)
+       if drivers[i] == "swps":
+           if boot_option == 1:
+               status, output = exec_cmd("modprobe swps io_no_init=1", 1)
+          else:
+               status, output = exec_cmd("modprobe "+drivers[i], 1)
+       else:
+           status, output = exec_cmd("modprobe "+drivers[i], 1)
+
     if status:
 	   print output
 	   if FORCE == 0:
@@ -223,10 +232,11 @@ def system_ready():
         return False
     return True
 
-def install():
+def install(boot_option=0):
+    ''' boot_option: 0 - normal, 1 - fast-reboot '''
     if not device_found():
         print "No device, installing...."
-        status = system_install()
+        status = system_install(boot_option)
         if status:
             if FORCE == 0:
                 return status
@@ -237,9 +247,9 @@ def install():
 def uninstall():
     global FORCE
     #uninstall drivers
-    exec_cmd("rmmod gpio_ich",1)
     for i in range(len(drivers)-1,-1,-1):
        status, output = exec_cmd("rmmod "+drivers[i], 1)
+    status, output = exec_cmd("rmmod gpio_ich",1)
     if status:
 	   print output
 	   if FORCE == 0:

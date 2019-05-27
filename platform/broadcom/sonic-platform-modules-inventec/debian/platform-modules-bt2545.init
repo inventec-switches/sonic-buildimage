@@ -11,35 +11,32 @@
 # Short-Description: Setup Inventec bt2545 board.
 ### END INIT INFO
 
-PLATFORM_DIR=/usr/share/sonic/device/x86_64-inventec_bt2545-r0/plugins
+# Check Fast-Reboot cause
+FAST_REBOOT='no'
+case "$(cat /proc/cmdline)" in
+  *fast-reboot*)
+    FAST_REBOOT='yes'
+    ;;
+  **)
+    FAST_REBOOT='no'
+    ;;
+esac
 
-PLATFORM_DAEMON=$PLATFORM_DIR/platfmgr.py
-PLATFORM_DAEMON_NAME=platfmgr
-
-# The process ID of the script when it runs is stored here:
-PLATFORM_PIDFILE=/var/run/$PLATFORM_DAEMON_NAME.pid
-
-do_monitor_start() {
-    /sbin/start-stop-daemon --quiet --oknodo --pidfile $PLATFORM_PIDFILE --make-pidfile --startas $PLATFORM_DAEMON --start --background -- $DAEMON_OPTS
-}
-
-do_monitor_stop() {
-    /sbin/start-stop-daemon --quiet --oknodo --stop --pidfile $PLATFORM_PIDFILE --retry 10
-}
-
+# START/STOP/FORCE-RELOAD/RESTART
 case "$1" in
 start)
 	echo -n "Setting up board... "
 	
-	/usr/local/bin/inventec_bt2545_util.py -f install
-        do_monitor_${1}
+        if [ "$FAST_REBOOT" = "yes" ] ; then
+          /usr/local/bin/inventec_bt2545_util.py -f fast-reboot-install
+        else
+          /usr/local/bin/inventec_bt2545_util.py -f install
+        fi
 	echo "done."
 	;;
 
 stop)
-    
         /usr/local/bin/inventec_bt2545_util.py -f clean
-        do_monitor_${1}
 	echo "done."
 
 	;;

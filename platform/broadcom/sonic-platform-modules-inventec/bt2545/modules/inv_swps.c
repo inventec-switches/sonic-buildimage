@@ -2947,7 +2947,7 @@ register_swp_module(void){
         SWPS_WARN("Allocate CTL MAJOR failure! \n");
         goto err_register_swp_module_1;
     }
-    if (alloc_chrdev_region(&port_devt, 0, dev_total, SWP_CLS_NAME) < 0){
+    if (alloc_chrdev_region(&port_devt, 0, port_total, SWP_CLS_NAME) < 0){
         SWPS_WARN("Allocate PORT MAJOR failure! \n");
         goto err_register_swp_module_2;
     }
@@ -3221,7 +3221,6 @@ err_init_mux:
 err_init_portobj:
     clean_ioexp_objs();
 err_init_ioexp:
-    class_unregister(swp_class_p);
     class_destroy(swp_class_p);
     unregister_chrdev_region(MKDEV(ctl_major, 0), 1);
     unregister_chrdev_region(MKDEV(port_major, 0), port_total);
@@ -3238,7 +3237,6 @@ swp_module_exit(void){
     clean_port_objs();
     clean_ioexp_objs();
     clean_mux_objs();
-    class_unregister(swp_class_p);
     class_destroy(swp_class_p);
     unregister_chrdev_region(MKDEV(ctl_major, 0), 1);
     unregister_chrdev_region(MKDEV(port_major, 0), port_total);
