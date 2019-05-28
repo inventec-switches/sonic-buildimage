@@ -271,10 +271,6 @@ class SfpUtil(SfpUtilBase):
         return True
 
     def get_transceiver_change_event(self):
-        #"""
-        #TODO: This function need to be implemented
-        #"""
-        #raise NotImplementedError
         global monitor
         port_dict = {}
         with SWPSEventMonitor() as monitor:
@@ -294,6 +290,14 @@ class SfpUtil(SfpUtilBase):
                             #port_dict[rc.group("num")] = "1"
                         return True, port_dict
                     return False, {}
+
+    def get_eeprom_dom_raw(self, port_num):
+        if port_num in self.qsfp_ports:
+            # QSFP DOM EEPROM is also at addr 0x50 and thus also stored in eeprom_ifraw
+            return None
+        else:
+            # Read dom eeprom at addr 0x51
+            return self._read_eeprom_devid(port_num, self.DOM_EEPROM_ADDR, 256)
 
     def get_transceiver_dom_info_dict(self, port_num):
         if port_num in self.qsfp_ports:
