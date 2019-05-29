@@ -150,7 +150,7 @@ def system_install(boot_option):
        if drivers[i] == "swps":
            if boot_option == 1:
                status, output = exec_cmd("modprobe swps io_no_init=1", 1)
-          else:
+           else:
                status, output = exec_cmd("modprobe "+drivers[i], 1)
        else:
            status, output = exec_cmd("modprobe "+drivers[i], 1)

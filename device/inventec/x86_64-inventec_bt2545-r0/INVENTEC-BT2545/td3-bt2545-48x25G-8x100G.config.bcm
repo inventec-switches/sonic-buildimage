@@ -342,66 +342,7 @@ phy_chain_tx_polarity_flip_physical{132.0}=0x0
 phy_chain_rx_polarity_flip_physical{132.0}=0x0
 
 # EQ/IDriver
-# 25G
-# Clare TODO: modify according to EQ Table
-#serdes_preemphasis_1=0x13460B
-#serdes_preemphasis_2=0x13460B
-#serdes_preemphasis_3=0x14450B
-#serdes_preemphasis_4=0x13460B
-#serdes_preemphasis_5=0x11480B
-#serdes_preemphasis_6=0x13470A
-#serdes_preemphasis_7=0x14460A
-#serdes_preemphasis_8=0x11490A
-#serdes_preemphasis_13=0x10490B
-#serdes_preemphasis_14=0x104A0A
-#serdes_preemphasis_15=0x0F4B0A
-#serdes_preemphasis_16=0x0F4B0A
-#serdes_preemphasis_21=0x0D4D0A
-#serdes_preemphasis_22=0x0D4D0A
-#serdes_preemphasis_23=0x0D4D0A
-#serdes_preemphasis_24=0x0D4D0A
-#serdes_preemphasis_29=0x0B4F0A
-#serdes_preemphasis_30=0x0D4E09
-#serdes_preemphasis_31=0x0B4F0A
-#serdes_preemphasis_32=0x0C4F09
-#serdes_preemphasis_33=0x0B4F0A
-#serdes_preemphasis_34=0x0A5109
-#serdes_preemphasis_35=0x09510A
-#serdes_preemphasis_36=0x0B5009
-#serdes_preemphasis_41=0x09510A
-#serdes_preemphasis_42=0x0B5009
-#serdes_preemphasis_43=0x09510A
-#serdes_preemphasis_44=0x0A5109
-#serdes_preemphasis_49=0x0A500A
-#serdes_preemphasis_50=0x0B4F0A
-#serdes_preemphasis_51=0x09510A
-#serdes_preemphasis_52=0x0E4C0A
-#serdes_preemphasis_57=0x0D4D0A
-#serdes_preemphasis_58=0x0E4D09
-#serdes_preemphasis_59=0x0C4E0A
-#serdes_preemphasis_60=0x0E4D09
-#serdes_preemphasis_61=0x0B4F0A
-#serdes_preemphasis_62=0x0D4E09
-#serdes_preemphasis_63=0x0D4D0A
-#serdes_preemphasis_64=0x0D4D0A
-#serdes_preemphasis_67=0x0B4F0A
-#serdes_preemphasis_68=0x0C4E0A
-#serdes_preemphasis_69=0x0B4F0A
-#serdes_preemphasis_70=0x0B4F0A
-#serdes_preemphasis_71=0x0B4F0A
-#serdes_preemphasis_72=0x0F4B0A
-#serdes_preemphasis_73=0x0E4C0A
-#serdes_preemphasis_74=0x0F4B0A
-#serdes_preemphasis_87=0x0E4C0A
-#serdes_preemphasis_79=0x0F4B0A
-#serdes_preemphasis_95=0x0F4B0A
-#serdes_preemphasis_99=0x0F4B0A
-#serdes_preemphasis_115=0x13470A
-#serdes_preemphasis_107=0x12480A
-#serdes_preemphasis_123=0x154609
-#serdes_preemphasis_127=0x13470A
-
-# BEGIN Clare's modification for 25G 100G 
+# 25G 100G 
 serdes_preemphasis_1=0x0F4B0A
 serdes_preemphasis_2=0x104A0A
 serdes_preemphasis_3=0x0E4C0A
@@ -482,87 +423,8 @@ serdes_preemphasis_lane0_127=0x0D4E09
 serdes_preemphasis_lane1_127=0x0D4E09
 serdes_preemphasis_lane2_127=0x0D4E09
 serdes_preemphasis_lane3_127=0x0D4E09
-#End of Clare's 25G 100G Modification
 
-# 10G
-#serdes_preemphasis_10G_1=0x0E4403
-#serdes_preemphasis_10G_2=0x0D4202
-#serdes_preemphasis_10G_3=0x0E4403
-#serdes_preemphasis_10G_4=0x0D4003
-#serdes_preemphasis_10G_5=0x0E4403
-#serdes_preemphasis_10G_6=0x0C3C03
-#serdes_preemphasis_10G_7=0x0E4203
-#serdes_preemphasis_10G_8=0x0C3A02
-#serdes_preemphasis_10G_13=0x0E4203
-#serdes_preemphasis_10G_14=0x0C3A02
-#serdes_preemphasis_10G_15=0x0C3C03
-#serdes_preemphasis_10G_16=0x0C3802
-#serdes_preemphasis_10G_21=0x0C3E03
-#serdes_preemphasis_10G_22=0x0A3603
-#serdes_preemphasis_10G_23=0x0C3C03
-#serdes_preemphasis_10G_24=0x0A3603
-#serdes_preemphasis_10G_29=0x0C3A03
-#serdes_preemphasis_10G_30=0x072E01
-#serdes_preemphasis_10G_31=0x0A3803
-#serdes_preemphasis_10G_32=0x072E01
-#serdes_preemphasis_10G_33=0x073101
-#serdes_preemphasis_10G_34=0x072E01
-#serdes_preemphasis_10G_35=0x073002
-#serdes_preemphasis_10G_36=0x072E01
-#serdes_preemphasis_10G_41=0x073002
-#serdes_preemphasis_10G_42=0x072E01
-#serdes_preemphasis_10G_43=0x073002
-#serdes_preemphasis_10G_44=0x072E01
-#serdes_preemphasis_10G_49=0x073002
-#serdes_preemphasis_10G_50=0x072E01
-#serdes_preemphasis_10G_51=0x073002
-#serdes_preemphasis_10G_52=0x072E01
-#serdes_preemphasis_pre2_post2_post3_10G_52=0x000202
-#serdes_preemphasis_10G_57=0x083402
-#serdes_preemphasis_pre2_post2_post3_10G_57=0x000202
-#serdes_preemphasis_10G_58=0x073101
-#serdes_preemphasis_pre2_post2_post3_10G_58=0x000202
-#serdes_preemphasis_10G_59=0x083402
-#serdes_preemphasis_pre2_post2_post3_10G_59=0x000202
-#serdes_preemphasis_10G_60=0x083101
-#serdes_preemphasis_pre2_post2_post3_10G_60=0x000101
-#serdes_preemphasis_10G_61=0x083402
-#serdes_preemphasis_10G_62=0x073201
-#serdes_preemphasis_10G_63=0x0A3402
-#serdes_preemphasis_10G_64=0x093401
-#serdes_preemphasis_10G_67=0x0A3402
-#serdes_preemphasis_10G_68=0x093202
-#serdes_preemphasis_pre2_post2_post3_10G_68=0x000101
-#serdes_preemphasis_10G_69=0x0A3402
-#serdes_preemphasis_10G_70=0x083402
-#serdes_preemphasis_10G_71=0x083602
-#serdes_preemphasis_10G_72=0x093502
-#serdes_preemphasis_10G_73=0x0A3601
-#serdes_preemphasis_10G_74=0x093801
-#serdes_preemphasis_10G_lane0_87=0x0E4403
-#serdes_preemphasis_10G_lane1_87=0x0E4403
-#serdes_preemphasis_10G_lane2_87=0x0E4403
-#serdes_preemphasis_10G_lane3_87=0x0E4403
-#serdes_preemphasis_pre2_post2_post3_10G_lane2_87=0x000101
-#serdes_preemphasis_10G_lane0_79=0x0E4403
-#serdes_preemphasis_10G_lane1_79=0x0E4403
-#serdes_preemphasis_10G_lane2_79=0x0D3E03
-#serdes_preemphasis_10G_lane3_79=0x0E4403
-#serdes_preemphasis_pre2_post2_post3_10G_lane1_79=0x000101
-#serdes_preemphasis_pre2_post2_post3_10G_lane3_79=0x000101
-#serdes_preemphasis_10G_lane0_95=0x0E4403
-#serdes_preemphasis_10G_lane1_95=0x0E4403
-#serdes_preemphasis_10G_lane2_95=0x0E4403
-#serdes_preemphasis_10G_lane3_95=0x0D4403
-#serdes_preemphasis_pre2_post2_post3_10G_lane1_95=0x000101
-#serdes_preemphasis_pre2_post2_post3_10G_lane3_95=0x000202
-#serdes_preemphasis_10G_99=0x0E4403
-#serdes_preemphasis_10G_115=0x0E4403
-#serdes_preemphasis_10G_107=0x0E4403
-#serdes_preemphasis_10G_123=0x0E4403
-#serdes_preemphasis_10G_127=0x0E4403
-
-#BEGIN Clare Modify 10G 40G
+# 10G 40G
 serdes_preemphasis_10G_1=0x0F4B0A
 serdes_preemphasis_10G_2=0x104A0A
 serdes_preemphasis_10G_3=0x0E4C0A
@@ -643,10 +505,9 @@ serdes_preemphasis_10G_lane0_127=0x0D4E09
 serdes_preemphasis_10G_lane1_127=0x0D4E09
 serdes_preemphasis_10G_lane2_127=0x0D4E09
 serdes_preemphasis_10G_lane3_127=0x0D4E09
-#END Clare Modify 10G 40G
 
 # interface type
-# Clare: Change CR(13), CR4(14) to KR(11), SR4(28)
+# CR(13), CR4(14) to KR(11), SR4(28)
 serdes_if_type_1=11
 serdes_if_type_2=11
 serdes_if_type_3=11
@@ -704,3 +565,4 @@ serdes_if_type_107=28
 serdes_if_type_123=28
 serdes_if_type_127=28
 
+stable_size=0x5500000
