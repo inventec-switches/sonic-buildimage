@@ -14,10 +14,10 @@
 # Check Fast-Reboot cause
 FAST_REBOOT='no'
 case "$(cat /proc/cmdline)" in
-  *fast-reboot*)
+  *fast-reboot*|*warm*)
     FAST_REBOOT='yes'
     ;;
-  **)
+  *)
     FAST_REBOOT='no'
     ;;
 esac
