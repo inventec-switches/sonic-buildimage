@@ -180,10 +180,12 @@ static int pca9541_reg_read(struct i2c_client *client, u8 command)
 			}
 		};
 		ret = adap->algo->master_xfer(adap, msg, 2);
-		if (ret == 2)
+		if (ret == 2) {
 			ret = val;
-		else if (ret >= 0)
+                }
+		else if (ret >= 0) {
 			ret = -EIO;
+                }
 	} else {
 		union i2c_smbus_data data;
 
@@ -192,8 +194,9 @@ static int pca9541_reg_read(struct i2c_client *client, u8 command)
 					     I2C_SMBUS_READ,
 					     command,
 					     I2C_SMBUS_BYTE_DATA, &data);
-		if (!ret)
+		if (!ret) {
 			ret = data.byte;
+                }
 	}
 	return ret;
 }
@@ -208,9 +211,10 @@ static void pca9541_release_bus(struct i2c_client *client)
 	int reg;
 
 	reg = pca9541_reg_read(client, PCA9541_CONTROL);
-	if (reg >= 0 && !busoff(reg) && mybus(reg))
+	if (reg >= 0 && !busoff(reg) && mybus(reg)) {
 		pca9541_reg_write(client, PCA9541_CONTROL,
 				  (reg & PCA9541_CTL_NBUSON) >> 1);
+        }
 }
 
 static void pca9641_release_bus(struct i2c_client *client)
@@ -262,8 +266,9 @@ static int pca9541_arbitrate(struct i2c_client *client)
 	int reg;
 
 	reg = pca9541_reg_read(client, PCA9541_CONTROL);
-	if (reg < 0)
+	if (reg < 0) {
 		return reg;
+        }
 
 	if (busoff(reg)) {
 		int istat;
@@ -295,11 +300,12 @@ static int pca9541_arbitrate(struct i2c_client *client)
 		 * Bus is on, and we own it. We are done with acquisition.
 		 * Reset NTESTON and BUSINIT, then return success.
 		 */
-		if (reg & (PCA9541_CTL_NTESTON | PCA9541_CTL_BUSINIT))
+		if (reg & (PCA9541_CTL_NTESTON | PCA9541_CTL_BUSINIT)) {
 			pca9541_reg_write(client,
 					  PCA9541_CONTROL,
 					  reg & ~(PCA9541_CTL_NTESTON
 						  | PCA9541_CTL_BUSINIT));
+                }
 		return 1;
 	} else {
 		/*
@@ -317,11 +323,12 @@ static int pca9541_arbitrate(struct i2c_client *client)
 					  | PCA9541_CTL_NTESTON);
 		} else {
 			/* Request bus ownership if needed */
-			if (!(reg & PCA9541_CTL_NTESTON))
+			if (!(reg & PCA9541_CTL_NTESTON)) {
 				pca9541_reg_write(client,
 						  PCA9541_CONTROL,
 						  reg | PCA9541_CTL_NTESTON);
-		}
+                        }
+                }
 	}
 	return 0;
 }
@@ -338,13 +345,16 @@ static int pca9541_select_chan(struct i2c_adapter *adap, void *client, u32 chan)
 
 	do {
 		ret = pca9541_arbitrate(client);
-		if (ret)
+		if (ret) {
 			return ret < 0 ? ret : 0;
+                }
 
-		if (data->select_timeout == SELECT_DELAY_SHORT)
+		if (data->select_timeout == SELECT_DELAY_SHORT) {
 			udelay(data->select_timeout);
-		else
+                }
+		else {
 			msleep(data->select_timeout / 1000);
+                }
 	} while (time_is_after_eq_jiffies(timeout));
 
 	return -ETIMEDOUT;
@@ -363,9 +373,17 @@ static int pca9641_arbitrate(struct i2c_client *client)
 	int reg_ctl, reg_sts;
 
 	reg_ctl = pca9541_reg_read(client, PCA9641_CONTROL);
-	if (reg_ctl < 0)
+	if (reg_ctl < 0) {
 		return reg_ctl;
+        }
 	reg_sts = pca9541_reg_read(client, PCA9641_STATUS);
+
+        if (reg_sts < 0) {
+            return reg_sts;
+        }
+        if (reg_sts & PCA9641_STS_BUS_HUNG) {
+            reg_ctl |= PCA9641_CTL_BUS_INIT;
+        }
 
 	if (BUSOFF(reg_ctl, reg_sts)) {
 		/*
@@ -384,6 +402,13 @@ static int pca9641_arbitrate(struct i2c_client *client)
 			reg_ctl |= PCA9641_CTL_BUS_CONNECT
 					| PCA9641_CTL_LOCK_REQ;
 			pca9541_reg_write(client, PCA9641_CONTROL, reg_ctl);
+                        if (reg_sts & PCA9641_STS_BUS_HUNG) {
+                            reg_sts = pca9541_reg_read(client, PCA9641_STATUS);
+                            if(reg_sts < 0 || reg_sts & (PCA9641_STS_BUS_INIT_FAIL | PCA9641_STS_BUS_HUNG)) {
+                                return -1;
+                            }
+                        }
+
 			data->select_timeout = SELECT_DELAY_SHORT;
 
 			return 1;
@@ -392,6 +417,12 @@ static int pca9641_arbitrate(struct i2c_client *client)
 			 * Other master requested ownership.
 			 * Set extra long timeout to give it time to acquire it.
 			 */
+	                 if (reg_sts & PCA9641_STS_BUS_HUNG) {
+                             reg_sts = pca9541_reg_read(client, PCA9641_STATUS);
+                             if(reg_sts < 0 || reg_sts & (PCA9641_STS_BUS_INIT_FAIL | PCA9641_STS_BUS_HUNG)) {
+                                 return -1;
+                             }
+                         }
 			data->select_timeout = SELECT_DELAY_LONG * 2;
 		}
 	} else if (lock_grant(reg_ctl)) {
@@ -401,6 +432,12 @@ static int pca9641_arbitrate(struct i2c_client *client)
 		reg_ctl |= PCA9641_CTL_BUS_CONNECT | PCA9641_CTL_LOCK_REQ;
 		pca9541_reg_write(client, PCA9641_CONTROL, reg_ctl);
 
+                if (reg_sts & PCA9641_STS_BUS_HUNG) {
+                    reg_sts = pca9541_reg_read(client, PCA9641_STATUS);
+                    if(reg_sts < 0 || reg_sts & (PCA9641_STS_BUS_INIT_FAIL | PCA9641_STS_BUS_HUNG)) {
+                        return -1;
+                    }
+                }
 		return 1;
 	} else if (other_lock(reg_sts)) {
 		/*
@@ -408,6 +445,9 @@ static int pca9641_arbitrate(struct i2c_client *client)
 		 * If arbitration timeout has expired, force ownership.
 		 * Otherwise request it.
 		 */
+                if (reg_sts & PCA9641_STS_BUS_HUNG) {
+                    return -1;
+                }
 		data->select_timeout = SELECT_DELAY_LONG;
 		reg_ctl |= PCA9641_CTL_LOCK_REQ;
 		pca9541_reg_write(client, PCA9641_CONTROL, reg_ctl);
@@ -427,13 +467,16 @@ static int pca9641_select_chan(struct i2c_adapter *adap, void *client, u32 chan)
 
         do {
                 ret = pca9641_arbitrate(client);
-                if (ret)
+                if (ret) {
                         return ret < 0 ? ret : 0;
+                }
 
-                if (data->select_timeout == SELECT_DELAY_SHORT)
+                if (data->select_timeout == SELECT_DELAY_SHORT) {
                         udelay(data->select_timeout);
-                else
+                }
+                else {
                         msleep(data->select_timeout / 1000);
+                }
         } while (time_is_after_eq_jiffies(timeout));
 
         return -ETIMEDOUT;
@@ -451,10 +494,12 @@ static int pca9641_detect_id(struct i2c_client *client)
         int reg;
 
         reg = pca9541_reg_read(client, PCA9641_ID);
-        if (reg == PCA9641_ID_MAGIC)
+        if (reg == PCA9641_ID_MAGIC) {
                 return 1;
-        else
+        }
+        else {
                 return 0;
+        }
 }
 
 
@@ -471,8 +516,9 @@ static int pca9541_probe(struct i2c_client *client,
 	int ret = -ENODEV;
 	int detect_id;
 
-	if (!i2c_check_functionality(adap, I2C_FUNC_SMBUS_BYTE_DATA))
+	if (!i2c_check_functionality(adap, I2C_FUNC_SMBUS_BYTE_DATA)) {
 		goto err;
+        }
 
 	data = kzalloc(sizeof(struct pca9541), GFP_KERNEL);
 	if (!data) {
@@ -501,8 +547,9 @@ static int pca9541_probe(struct i2c_client *client,
 	/* Create mux adapter */
 
 	force = 0;
-	if (pdata)
+	if (pdata) {
 		force = pdata->modes[0].adap_id;
+        }
 
 	if (detect_id == 0) {
 		data->mux_adap = i2c_add_mux_adapter(adap, &client->dev, client,
