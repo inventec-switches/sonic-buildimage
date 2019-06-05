@@ -1,0 +1,78 @@
+From 6aa3ce742b55944457121f7190730b5b094cbe34 Mon Sep 17 00:00:00 2001
+From: Clare Lu <lu.clare@inventec.com>
+Date: Wed, 5 Jun 2019 13:56:39 +0800
+Subject: [PATCH] Fix abnormal TX RX utilization rate
+
+---
+ scripts/portstat | 23 +++++++++++++++++------
+ 1 file changed, 17 insertions(+), 6 deletions(-)
+
+diff --git a/scripts/portstat b/scripts/portstat
+index 7f31aa7..cf9ed92 100755
+--- a/scripts/portstat
++++ b/scripts/portstat
+@@ -209,15 +209,26 @@ class Portstat(object):
+                 rate = int(ns_diff(newstr, oldstr).replace(',',''))/delta
+                 return "{:.2f}".format(rate)+'/s'
+ 
+-        def ns_util(newstr, oldstr, delta):
++        def ns_util(newstr, oldstr, delta, port):
+             """
+                 Calculate the util.
+             """
+             if newstr == STATUS_NA or oldstr == STATUS_NA:
+                 return STATUS_NA
+             else:
++                # Get speed from APPL_DB
++                db = swsssdk.SonicV2Connector(host='127.0.0.1')
++                db.connect(db.APPL_DB)
++                full_table_id = PORT_STATUS_TABLE_PREFIX + port
++                speed = db.get(db.APPL_DB, full_table_id, "speed")
++
+                 rate = int(ns_diff(newstr, oldstr).replace(',',''))/delta
+-                util = rate/(PORT_RATE*1024*1024*1024/8.0)*100
++                
++                if speed is None:
++                    util = rate/(PORT_RATE*1024*1024*1024/8.0)*100
++                else:
++                    util = rate/(int(speed)/1000*1024*1024*1024/8.0)*100
++
+                 return "{:.2f}%".format(util)
+ 
+         table = []
+@@ -237,14 +248,14 @@ class Portstat(object):
+                                   ns_diff(cntr.rx_ok, old_cntr.rx_ok),
+                                   ns_brate(cntr.rx_byt, old_cntr.rx_byt, time_gap),
+                                   ns_prate(cntr.rx_ok, old_cntr.rx_ok, time_gap),
+-                                  ns_util(cntr.rx_byt, old_cntr.rx_byt, time_gap),
++                                  ns_util(cntr.rx_byt, old_cntr.rx_byt, time_gap, key),
+                                   ns_diff(cntr.rx_err, old_cntr.rx_err),
+                                   ns_diff(cntr.rx_drop, old_cntr.rx_drop),
+                                   ns_diff(cntr.rx_ovr, old_cntr.rx_ovr),
+                                   ns_diff(cntr.tx_ok, old_cntr.tx_ok),
+                                   ns_brate(cntr.tx_byt, old_cntr.tx_byt, time_gap),
+                                   ns_prate(cntr.tx_ok, old_cntr.tx_ok, time_gap),
+-                                  ns_util(cntr.tx_byt, old_cntr.tx_byt, time_gap),
++                                  ns_util(cntr.tx_byt, old_cntr.tx_byt, time_gap, key),
+                                   ns_diff(cntr.tx_err, old_cntr.tx_err),
+                                   ns_diff(cntr.tx_drop, old_cntr.tx_drop),
+                                   ns_diff(cntr.tx_ovr, old_cntr.tx_ovr)))
+@@ -269,13 +280,13 @@ class Portstat(object):
+                     table.append((key, self.get_port_state(key),
+                                       ns_diff(cntr.rx_ok, old_cntr.rx_ok),
+                                       ns_brate(cntr.rx_byt, old_cntr.rx_byt, time_gap),
+-                                      ns_util(cntr.rx_byt, old_cntr.rx_byt, time_gap),
++                                      ns_util(cntr.rx_byt, old_cntr.rx_byt, time_gap, key),
+                                       ns_diff(cntr.rx_err, old_cntr.rx_err),
+                                       ns_diff(cntr.rx_drop, old_cntr.rx_drop),
+                                       ns_diff(cntr.rx_ovr, old_cntr.rx_ovr),
+                                       ns_diff(cntr.tx_ok, old_cntr.tx_ok),
+                                       ns_brate(cntr.tx_byt, old_cntr.tx_byt, time_gap),
+-                                      ns_util(cntr.tx_byt, old_cntr.tx_byt, time_gap),
++                                      ns_util(cntr.tx_byt, old_cntr.tx_byt, time_gap, key),
+                                       ns_diff(cntr.tx_err, old_cntr.tx_err),
+                                       ns_diff(cntr.tx_drop, old_cntr.tx_drop),
+                                       ns_diff(cntr.tx_ovr, old_cntr.tx_ovr)))
+-- 
+2.7.4
+
