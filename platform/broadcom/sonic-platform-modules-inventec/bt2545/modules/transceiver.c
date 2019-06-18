@@ -4,13 +4,13 @@
 #include <linux/delay.h>
 #include "io_expander.h"
 #include "transceiver.h"
-
+#include "sff_io.h"
 /* For build single module using (Ex: ONL platform) */
 #include <linux/module.h>
 //#include <linux/inventec/d5254/io_expander.h>
 //#include <linux/inventec/d5254/transceiver.h>
-
 extern int io_no_init;
+#define DETECT_TYPE_TIMEOUT (20)
 /* ========== Register EEPROM address mapping ==========
  */
 struct eeprom_map_s eeprom_map_sfp = {
@@ -2188,7 +2188,7 @@ sfp_get_transvr_rx_power(struct transvr_obj_s *self,
     }
     /* Return Unit: 1 mW */
     return _common_count_rx_power(self->curr_rx_power[0],
-                                  self->curr_rx_power[1],
+                                  self->curr_rx_power[0],
                                   buf_p);
 }
 
@@ -5247,7 +5247,6 @@ detect_transvr_type(struct transvr_obj_s* self){
     return type;
 }
 
-
 static int
 detect_transvr_state(struct transvr_obj_s *self,
                      int result[2]){
@@ -5272,9 +5271,19 @@ detect_transvr_state(struct transvr_obj_s *self,
         return 0;
     }
     /* Case2: Transceiver unplugged */
+    #if 0
     if (!is_plugged(self)){
         result[0] = STATE_TRANSVR_DISCONNECTED;
         result[1] = TRANSVR_TYPE_UNPLUGGED;
+        return 0;
+    }
+#endif
+
+    /* Case2: Transceiver unplugged */
+    if (!sff_io_is_plugged(self->port_id)){
+        result[0] = STATE_TRANSVR_DISCONNECTED;
+        result[1] = TRANSVR_TYPE_UNPLUGGED;
+        //SWPS_INFO("%s: %s plug out: port_id:%d\n", __func__, self->swp_name, self->port_id);
         return 0;
     }
     /* Case3: Transceiver be isolated */
@@ -5283,21 +5292,30 @@ detect_transvr_state(struct transvr_obj_s *self,
         result[1] = TRANSVR_TYPE_ERROR;
         return ERR_TRNASVR_BE_ISOLATED;
     }
-    /* Case4: Transceiver plugged */
-    result[1] = detect_transvr_type(self);
-    /* Case4.1: I2C topology crash
-     * Note   : There are some I2C issues cause by transceiver/cables.
-     *          We need to check topology status when user insert it.
-     *          But in this step, we can't not ensure this is the issues
-     *          port. So, it return the ERR_TRANSVR_I2C_CRASH, then upper
-     *          layer will diagnostic I2C topology.
-     */
-    if (check_channel_tier_1() < 0) {
-        SWPS_INFO("%s: %s detect I2C crash <obj-state>:%d\n",
-                __func__, self->swp_name, self->state);
-        result[0] = STATE_TRANSVR_UNEXCEPTED;
-        result[1] = TRANSVR_TYPE_ERROR;
-        return ERR_TRANSVR_I2C_CRASH;
+
+
+    if (STATE_TRANSVR_CONNECTED != self->state) {
+        /* Case4: Transceiver plugged */
+        result[1] = detect_transvr_type(self);
+       // SWPS_INFO("detect_type dev_name:%s port_id:%d\n", self->swp_name, self->port_id);
+        /* Case4.1: I2C topology crash
+         * Note   : There are some I2C issues cause by transceiver/cables.
+         *          We need to check topology status when user insert it.
+         *          But in this step, we can't not ensure this is the issues
+         *          port. So, it return the ERR_TRANSVR_I2C_CRASH, then upper
+         *          layer will diagnostic I2C topology.
+         */
+        if (check_channel_tier_1() < 0) {
+            SWPS_INFO("%s: %s detect I2C crash <obj-state>:%d\n",
+                    __func__, self->swp_name, self->state);
+            result[0] = STATE_TRANSVR_UNEXCEPTED;
+            result[1] = TRANSVR_TYPE_ERROR;
+            return ERR_TRANSVR_I2C_CRASH;
+        }
+    } else { /*connected case*/
+            result[0] = STATE_TRANSVR_CONNECTED;
+            return 0;
+
     }
     /* Case4.2: System initial not ready,
      * Note   : Sometime i2c channel or transceiver EEPROM will delay that will
@@ -5337,7 +5355,6 @@ detect_transvr_state(struct transvr_obj_s *self,
     result[0] = STATE_TRANSVR_CONNECTED;
     return 0;
 }
-
 
 int
 _sfp_detect_class_by_extend_comp(struct transvr_obj_s* self) {
@@ -6947,8 +6964,38 @@ check_event_happened_4_pmode:
     }
     return 0;
 }
-
-
+int transvr_health_mtr(struct transvr_obj_s* self)
+{
+    
+    int state  = self->state;
+    int return_val = 0;
+    /*when transvr is connected , check if it's alive by accessing it at slower frequency*/
+    if (state == STATE_TRANSVR_CONNECTED)
+    {    
+        //SWPS_INFO("%s: %s connected_st <obj-state>:%d detect_type_count:%d\n",
+          //      __func__, self->swp_name, self->state, detect_type_count);
+        if (self->detect_type_count++ > DETECT_TYPE_TIMEOUT) {
+            self->detect_type_count = 0;
+            return_val = detect_transvr_type(self);
+            if (TRANSVR_TYPE_ERROR == return_val ||
+                TRANSVR_TYPE_UNPLUGGED == return_val) 
+            {
+                //SWPS_INFO("%s: %s sff type check fail <obj-state>:%d result:%d\n",
+                  //     __func__, self->swp_name, self->state, return_val);
+                if (check_channel_tier_1() < 0) {
+                    SWPS_INFO("%s: %s detect I2C crash <obj-state>:%d\n",
+                            __func__, self->swp_name, self->state);
+                    return ERR_TRANSVR_I2C_CRASH; 
+                }
+            }
+            //SWPS_INFO("%s: %s still alive <obj-state>:%d result:%d\n",
+            //        __func__, self->swp_name, self->state, return_val);
+        }
+    } else {
+        self->detect_type_count = 0;
+    } 
+    return 0;
+}    
 int
 common_fsm_4_polling_mode(struct transvr_obj_s* self,
                           char *caller_name){
@@ -7215,7 +7262,6 @@ comfsm_action_4_nothing:
 comfsm_action_4_connected:
     SWPS_DEBUG("FSM action: %s Connected.\n", self->swp_name);
     self->state = STATE_TRANSVR_CONNECTED;
-    self->type  = new_type;
     self->send_uevent(self, KOBJ_ADD);
     _transvr_clean_retry(self);
     return 0;
@@ -8204,7 +8250,8 @@ create_transvr_obj(char *swp_name,
                    int ioexp_virt_offset,
                    int transvr_type,
                    int chipset_type,
-                   int run_mode){
+                   int run_mode,
+                   int port_id){
 
     struct transvr_obj_s *result_p;
     struct eeprom_map_s  *map_p;
@@ -8250,6 +8297,7 @@ create_transvr_obj(char *swp_name,
     if (setup_i2c_client(result_p) < 0){
         goto err_create_transvr_dattr_fail;
     }
+    result_p->port_id = port_id;
     return result_p;
 
 err_create_transvr_dattr_fail:

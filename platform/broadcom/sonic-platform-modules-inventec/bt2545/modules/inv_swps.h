@@ -10,7 +10,7 @@
 #define SWP_DEV_PORT          "port"
 #define SWP_DEV_MODCTL        "module"
 #define SWP_RESET_PWD         "inventec"
-#define SWP_POLLING_PERIOD    (300)  /* msec */
+#define SWP_POLLING_PERIOD    (100)  /* msec */
 #define SWP_POLLING_ENABLE    (1)
 #define SWP_AUTOCONFIG_ENABLE (1)
 

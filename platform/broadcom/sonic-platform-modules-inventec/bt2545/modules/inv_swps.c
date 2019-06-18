@@ -11,7 +11,7 @@
 #include <linux/dmi.h>
 #include <linux/i2c.h>
 #include "inv_swps.h"
-
+#include "sff_io.h"
 static int ctl_major;
 static int port_major;
 static int ioexp_total;
@@ -31,7 +31,11 @@ static void swp_polling_worker(struct work_struct *work);
 static DECLARE_DELAYED_WORK(swp_polling, swp_polling_worker);
 
 static int reset_i2c_topology(void);
-
+static int scan_100ms = 0;
+#define PROCESS_TIME (3) 
+static int process_scan = 0;
+#define IOEXP_CHECK_TIME (10) /*100ms * PROCESS_TIME(3) * 1 = >~ 5s*/ 
+static int transvr_minor_curr = 0;
 
 static int
 __swp_match(struct device *dev,
@@ -1436,12 +1440,19 @@ show_attr_present(struct device *dev_p,
                   char *buf_p){
 
     struct transvr_obj_s *tobj_p = dev_get_drvdata(dev_p);
+    int data = 0;
+    size_t len;
     if (!tobj_p){
         return -ENODEV;
     }
+    data = present_st_get(tobj_p->port_id);
+    len = snprintf(buf_p, PAGE_SIZE, "%d\n", data);
+    return len;
+#if 0
     return _show_ioexp_binary_attr(tobj_p,
                                    tobj_p->ioexp_obj_p->get_present,
                                    buf_p);
+#endif
 }
 
 
@@ -1451,12 +1462,20 @@ show_attr_tx_fault(struct device *dev_p,
                    char *buf_p){
 
     struct transvr_obj_s *tobj_p = dev_get_drvdata(dev_p);
+    int data = 0;
+    int len;
     if (!tobj_p){
         return -ENODEV;
     }
+    
+    data = txfault_get(tobj_p->port_id);
+    len = snprintf(buf_p, PAGE_SIZE, "%d\n", data);
+    return len;
+#if 0 
     return _show_ioexp_binary_attr(tobj_p,
                                    tobj_p->ioexp_obj_p->get_tx_fault,
-                                   buf_p);
+                              buf_p);
+#endif
 }
 
 
@@ -1466,12 +1485,20 @@ show_attr_rxlos(struct device *dev_p,
                 char *buf_p){
 
     struct transvr_obj_s *tobj_p = dev_get_drvdata(dev_p);
+    int data = 0;
+    int len;
     if (!tobj_p){
         return -ENODEV;
     }
+    
+    data = rxlos_get(tobj_p->port_id);
+    len = snprintf(buf_p, PAGE_SIZE, "%d\n", data);
+    return len;
+#if 0
     return _show_ioexp_binary_attr(tobj_p,
                                    tobj_p->ioexp_obj_p->get_rxlos,
                                    buf_p);
+#endif
 }
 
 
@@ -2282,7 +2309,46 @@ err_reset_i2c_topology_1:
     SWPS_INFO("%s: %s <minor>:%d\n", __func__, emsg, minor_err);
     return -1;
 }
+static int
+transvr_obj_health_mtr(char *dev_name)
+{
 
+    struct transvr_obj_s *tobj_p = NULL;
+    int retval = -9;
+
+    tobj_p = _get_transvr_obj(dev_name);
+    if (!tobj_p) {
+        SWPS_ERR("%s: %s _get_transvr_obj fail\n",
+                __func__, dev_name);
+        return -9;
+    }
+    /* Check transceiver current status */
+    lock_transvr_obj(tobj_p);
+    retval = transvr_health_mtr(tobj_p);
+    unlock_transvr_obj(tobj_p);
+    switch (retval) {
+        case 0:
+        case ERR_TRANSVR_UNPLUGGED:
+        case ERR_TRNASVR_BE_ISOLATED:
+        case ERR_TRANSVR_TASK_BUSY:
+            return 0;
+
+        case ERR_TRANSVR_I2C_CRASH:
+        default:
+            break;
+    }
+    /* Identify abnormal case */
+    if (check_channel_tier_1() < 0) {
+        SWPS_DEBUG("%s: %s critical error <err>:%d\n",
+                   __func__, dev_name, retval);
+        return -2;
+    }
+    SWPS_DEBUG("%s: %s single error <err>:%d\n",
+               __func__, dev_name, retval);
+    return -1;
+
+
+}    
 
 static int
 check_transvr_obj_one(char *dev_name){
@@ -2326,7 +2392,57 @@ check_transvr_obj_one(char *dev_name){
                __func__, dev_name, retval);
     return -1;
 }
+static int
+transvr_objs_health_mtr(void)
+{
+    char dev_name[32];
+    int port_id, err_code;
+//    int minor_curr = 0;
+        
+    //for (minor_curr=0; minor_curr<port_total; minor_curr++) {
+    if (port_total == transvr_minor_curr) 
+    {
+        transvr_minor_curr = 0;
+    }    
+    /* Generate device name */
+    port_id = port_layout[transvr_minor_curr].port_id;
+    transvr_minor_curr++;
+    memset(dev_name, 0, sizeof(dev_name));
+    snprintf(dev_name, sizeof(dev_name), "%s%d", SWP_DEV_PORT, port_id);
+    /* Handle current status */
+    err_code = transvr_obj_health_mtr(dev_name);
+    switch (err_code) {
+        case  0:
+        case -1:
+            break;
 
+        case -2:
+            SWPS_DEBUG("%s: %s reset I2C GO.\n",
+                       __func__, dev_name);
+            if (reset_i2c_topology() < 0) {
+                goto err_check_transvr_objs;
+            }
+            SWPS_DEBUG("%s: %s reset I2C OK.\n",
+                       __func__, dev_name);
+            break;
+
+        case -9:
+        default:
+            SWPS_DEBUG("%s: %s internal error <err>:%d\n",
+                    __func__, dev_name, err_code);
+            break;
+    }
+    //}
+    return 0;
+
+err_check_transvr_objs:
+    SWPS_ERR("%s: %s reset_i2c_topology fail.\n",
+               __func__, dev_name);
+    return -1;
+
+
+
+}    
 
 static int
 check_transvr_objs(void){
@@ -2334,7 +2450,7 @@ check_transvr_objs(void){
     char dev_name[32];
     int port_id, err_code;
     int minor_curr = 0;
-
+        
     for (minor_curr=0; minor_curr<port_total; minor_curr++) {
         /* Generate device name */
         port_id = port_layout[minor_curr].port_id;
@@ -2376,18 +2492,38 @@ err_check_transvr_objs:
 static void
 swp_polling_worker(struct work_struct *work){
 
-    /* Reset I2C */
-    if (flag_i2c_reset) {
+    if (io_exp_isr_handler() < 0) {
         goto polling_reset_i2c;
     }
+    /* Reset I2C */
+#if 0
     /* Check IOEXP */
     if (check_ioexp_objs() < 0) {
         goto polling_reset_i2c;
     }
-    /* Check transceiver */
-    if (check_transvr_objs() < 0) {
-        SWPS_DEBUG("%s: check_transvr_objs fail.\n", __func__);
-        flag_i2c_reset = 1;
+#endif
+    if (scan_100ms++ > PROCESS_TIME) {
+        scan_100ms = 0;
+        process_scan++;
+        /* Check transceiver */
+        if (check_transvr_objs() < 0) {
+            SWPS_DEBUG("%s: check_transvr_objs fail.\n", __func__);
+            flag_i2c_reset = 1;
+        }
+        if (transvr_objs_health_mtr() < 0) {
+             SWPS_DEBUG("%s: transvr_objs health fail.\n", __func__);
+             flag_i2c_reset = 1;
+
+        }
+    }
+    if (process_scan > IOEXP_CHECK_TIME) {
+        process_scan = 0;
+        if (io_exps_check() < 0) {
+            goto polling_reset_i2c;
+        }
+    }
+    if (flag_i2c_reset) {
+        goto polling_reset_i2c;
     }
     goto polling_schedule_round;
 
@@ -3046,7 +3182,7 @@ create_port_objs(void) {
         }
         transvr_obj_p = create_transvr_obj(dev_name, chan_id, ioexp_obj_p,
                                            ioexp_virt_offset, transvr_type,
-                                           chipset_type, run_mod);
+                                           chipset_type, run_mod, port_id);
         if (!transvr_obj_p){
             snprintf(err_msg, sizeof(err_msg),
                     "Create transceiver object fail <id>:%s", dev_name);
@@ -3186,6 +3322,10 @@ err_init_swps_common_1:
 static int __init
 swp_module_init(void){
 
+    if (sff_io_init() < 0) {
+
+        goto err_init_out;
+    }
     if (get_platform_type() < 0){
         goto err_init_out;
     }
@@ -3210,6 +3350,9 @@ swp_module_init(void){
     if (init_swps_common() < 0){
         goto err_init_topology;
     }
+    if (cpld_ioexp_isr_enable() < 0) {
+        goto err_init_topology;
+    } 
     SWPS_INFO("Inventec switch-port module V.%s initial success.\n", SWP_VERSION);
     return 0;
 
@@ -3237,6 +3380,9 @@ swp_module_exit(void){
     clean_port_objs();
     clean_ioexp_objs();
     clean_mux_objs();
+#if 1
+    sff_io_deinit();
+#endif 
     class_destroy(swp_class_p);
     unregister_chrdev_region(MKDEV(ctl_major, 0), 1);
     unregister_chrdev_region(MKDEV(port_major, 0), port_total);

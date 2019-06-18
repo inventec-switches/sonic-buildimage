@@ -1,7 +1,6 @@
 #include <linux/slab.h>
 #include <linux/i2c.h>
 #include "io_expander.h"
-
 /* For build single module using (Ex: ONL platform) */
 #include <linux/module.h>
 //#include <linux/inventec/d5254/io_expander.h>
@@ -2458,7 +2457,7 @@ EXPORT_SYMBOL(lock_ioexp_all);
 
 int
 check_channel_tier_1(void) {
-
+    
     if ( (!_is_channel_ready(ioexp_head_p)) &&
          (!_is_channel_ready(ioexp_tail_p)) ){
         return -1;
@@ -2529,6 +2528,7 @@ _scan_channel_tier_1_single(void) {
     client->adapter = adap;
     client->addr = fake_addr;
     /* Fouce move ioexp ptr to next */
+    /*note this one will always fail so, dont need retry*/
     ret = i2c_smbus_read_byte_data(client, fake_offs);
     SWPS_DEBUG("%s: move ioexp_ptr done. <ret>:%d\n", __func__, ret);
     kfree(client);

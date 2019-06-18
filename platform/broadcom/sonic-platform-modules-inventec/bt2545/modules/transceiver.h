@@ -255,7 +255,9 @@ struct transvr_worker_s;
 
 /* Class of transceiver object */
 struct transvr_obj_s {
-
+     /*io isr mode*/
+    int port_id;
+    int detect_type_count;
     /* ========== Object private property ==========
      * [Prop]: id
      * [Desc]: Type of serial transceiver.
@@ -789,7 +791,8 @@ create_transvr_obj(char *swp_name,
                    int ioexp_virt_offset,
                    int transvr_type,
                    int chipset_type,
-                   int run_mode);
+                   int run_mode,
+                   int port_id);
 
 void lock_transvr_obj(struct transvr_obj_s *self);
 void unlock_transvr_obj(struct transvr_obj_s *self);
@@ -798,7 +801,7 @@ int isolate_transvr_obj(struct transvr_obj_s *self);
 int resync_channel_tier_2(struct transvr_obj_s *self);
 
 void alarm_msg_2_user(struct transvr_obj_s *self, char *emsg);
-
+int transvr_health_mtr(struct transvr_obj_s* self);
 #endif /* TRANSCEIVER_H */
 
 
