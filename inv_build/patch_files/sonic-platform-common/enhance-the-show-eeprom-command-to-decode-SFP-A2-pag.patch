@@ -1,13 +1,13 @@
-From 12b94c14072a31a1bc70084d66a52cfc3cd6cb0b Mon Sep 17 00:00:00 2001
+From 621f5eb6125beae96654421a87db518a4fc4ce34 Mon Sep 17 00:00:00 2001
 From: James Huang <huang.james@inventec.com>
-Date: Thu, 17 Jan 2019 22:31:49 +0800
+Date: Fri, 21 Jun 2019 19:40:39 +0800
 Subject: [PATCH] Enhance the show eeprom command to decode SFP A2 page and
  QSFP 03 page
 
 ---
  sonic_sfp/sff8436.py     | 606 +++++++++++++++++++++++++++++++++++++++++++++--
- sonic_sfp/sfputilbase.py |  30 ++-
- 2 files changed, 609 insertions(+), 27 deletions(-)
+ sonic_sfp/sfputilbase.py |  13 +-
+ 2 files changed, 593 insertions(+), 26 deletions(-)
 
 diff --git a/sonic_sfp/sff8436.py b/sonic_sfp/sff8436.py
 index f2db5fb..5fb6eff 100644
@@ -652,7 +652,7 @@ index f2db5fb..5fb6eff 100644
 +    def get_data_pretty(self):
 +        return sffbase.get_data_pretty(self, self.dom_data)
 diff --git a/sonic_sfp/sfputilbase.py b/sonic_sfp/sfputilbase.py
-index 701b345..d6adc20 100644
+index 701b345..f794e4d 100644
 --- a/sonic_sfp/sfputilbase.py
 +++ b/sonic_sfp/sfputilbase.py
 @@ -16,6 +16,7 @@ try:
@@ -663,51 +663,21 @@ index 701b345..d6adc20 100644
  except ImportError as e:
      raise ImportError("%s - required module not found" % str(e))
  
-@@ -212,7 +213,19 @@ class SfpUtilBase(object):
-         sysfs_i2c_adapter_base_path = "/sys/class/i2c-adapter"
+@@ -210,9 +211,11 @@ class SfpUtilBase(object):
  
+     def _get_port_eeprom_path(self, port_num, devid):
+         sysfs_i2c_adapter_base_path = "/sys/class/i2c-adapter"
+-
          if port_num in self.port_to_eeprom_mapping.keys():
 -            sysfs_sfp_i2c_client_eeprom_path = self.port_to_eeprom_mapping[port_num]
-+            if type(self.port_to_eeprom_mapping[port_num]) is list:
-+                for eeprom_path in self.port_to_eeprom_mapping[port_num] :
-+                    # According to the "devid" requirements, return different EEPROM paths.
-+                    if eeprom_path.find("eeprom") > -1 :
-+                        sfp_port_a0_path = eeprom_path
-+                    else:
-+                        sfp_port_a2_path = eeprom_path
-+                if devid == self.DOM_EEPROM_ADDR :
-+                    sysfs_sfp_i2c_client_eeprom_path = sfp_port_a2_path
-+                else:
-+                    sysfs_sfp_i2c_client_eeprom_path = sfp_port_a0_path
++            if devid == self.DOM_EEPROM_ADDR :
++                sysfs_sfp_i2c_client_eeprom_path = self.port_to_eeprom_mapping[port_num].replace("0050","0051")
 +            else:
 +                sysfs_sfp_i2c_client_eeprom_path = self.port_to_eeprom_mapping[port_num]
          else:
              sysfs_i2c_adapter_base_path = "/sys/class/i2c-adapter"
  
-@@ -280,7 +293,11 @@ class SfpUtilBase(object):
-             print("Error: reading sysfs file %s" % sysfs_sfp_i2c_client_eeprom_path)
-             return None
- 
--        eeprom_raw = self._read_eeprom_specific_bytes(sysfsfile_eeprom, offset, num_bytes)
-+        # According to the "devid" requirements, return different EEPROM paths.
-+        if devid == self.DOM_EEPROM_ADDR  :
-+            eeprom_raw = self._read_eeprom_specific_bytes(sysfsfile_eeprom, offset, 128)
-+        else:
-+            eeprom_raw = self._read_eeprom_specific_bytes(sysfsfile_eeprom, offset, num_bytes)
- 
-         try:
-             sysfsfile_eeprom.close()
-@@ -586,7 +603,8 @@ class SfpUtilBase(object):
-     def get_eeprom_dom_raw(self, port_num):
-         if port_num in self.qsfp_ports:
-             # QSFP DOM EEPROM is also at addr 0x50 and thus also stored in eeprom_ifraw
--            return None
-+            return self._read_eeprom_devid(port_num, self.DOM_EEPROM_ADDR, 0)
-+            #return None
-         else:
-             # Read dom eeprom at addr 0x51
-             return self._read_eeprom_devid(port_num, self.DOM_EEPROM_ADDR, 0)
-@@ -615,6 +633,12 @@ class SfpUtilBase(object):
+@@ -615,6 +618,12 @@ class SfpUtilBase(object):
              sfpd_obj = sff8436Dom(eeprom_ifraw)
              if sfpd_obj is not None:
                  sfp_data['dom'] = sfpd_obj.get_data_pretty()
