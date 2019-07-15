@@ -162,36 +162,42 @@ def system_install():
                 return status
     for i in range(18,26):
         status, output =exec_cmd("echo sff8436 0x50 > /sys/bus/i2c/devices/i2c-1/i2c-3/i2c-"+str(i)+"/new_device", 1)
+        status, output =exec_cmd("echo sff8436 0x51 > /sys/bus/i2c/devices/i2c-1/i2c-3/i2c-"+str(i)+"/new_device", 1)
         if status:
             print output
             if FORCE == 0:
                 return status
     for i in range(26,34):
         status, output =exec_cmd("echo sff8436 0x50 > /sys/bus/i2c/devices/i2c-1/i2c-4/i2c-"+str(i)+"/new_device", 1)
+        status, output =exec_cmd("echo sff8436 0x51 > /sys/bus/i2c/devices/i2c-1/i2c-4/i2c-"+str(i)+"/new_device", 1)
         if status:
             print output
             if FORCE == 0:
                 return status
     for i in range(34,42):
         status, output =exec_cmd("echo sff8436 0x50 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-"+str(i)+"/new_device", 1)
+        status, output =exec_cmd("echo sff8436 0x51 > /sys/bus/i2c/devices/i2c-1/i2c-5/i2c-"+str(i)+"/new_device", 1)
         if status:
             print output
             if FORCE == 0:
                 return status
     for i in range(42,50):
         status, output =exec_cmd("echo sff8436 0x50 > /sys/bus/i2c/devices/i2c-1/i2c-6/i2c-"+str(i)+"/new_device", 1)
+        status, output =exec_cmd("echo sff8436 0x51 > /sys/bus/i2c/devices/i2c-1/i2c-6/i2c-"+str(i)+"/new_device", 1)
         if status:
             print output
             if FORCE == 0:
                 return status
     for i in range(50,58):
         status, output =exec_cmd("echo sff8436 0x50 > /sys/bus/i2c/devices/i2c-1/i2c-7/i2c-"+str(i)+"/new_device", 1)
+        status, output =exec_cmd("echo sff8436 0x51 > /sys/bus/i2c/devices/i2c-1/i2c-7/i2c-"+str(i)+"/new_device", 1)
         if status:
             print output
             if FORCE == 0:
                 return status
     for i in range(58,66):
         status, output =exec_cmd("echo sff8436 0x50 > /sys/bus/i2c/devices/i2c-1/i2c-8/i2c-"+str(i)+"/new_device", 1)
+        status, output =exec_cmd("echo sff8436 0x51 > /sys/bus/i2c/devices/i2c-1/i2c-8/i2c-"+str(i)+"/new_device", 1)
         if status:
             print output
             if FORCE == 0:

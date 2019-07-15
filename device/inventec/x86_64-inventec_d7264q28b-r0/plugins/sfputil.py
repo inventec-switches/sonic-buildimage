@@ -8,6 +8,11 @@ try:
     import socket, re,os
     from collections import OrderedDict
     from sonic_sfp.sfputilbase import SfpUtilBase
+    from sonic_sfp.sff8436 import sff8436DomThreshold
+    from sonic_sfp.sff8436 import sff8436InterfaceId
+    from sonic_sfp.sff8436 import sff8436Dom
+    from sonic_sfp.sff8472 import sff8472InterfaceId
+    from sonic_sfp.sff8472 import sff8472Dom
 except ImportError as e:
     raise ImportError("%s - required module not found" % str(e))
 
@@ -161,24 +166,11 @@ class SfpUtil(SfpUtilBase):
         return self._port_to_eeprom_mapping
 
     def __init__(self):
-        eeprom_path = "/sys/class/swps/port{0}/eeprom"
-        sfp_a2_eeprom_path = "/sys/class/swps/port{0}/A2"
-        qsfp_p3_eeprom_path = "/sys/class/swps/port{0}/Page03"
+        eeprom_path = "/sys/bus/i2c/devices/{0}-0050/eeprom"
 
         for x in range(0, self.port_end + 1):
-            port_eeprom_path = eeprom_path.format(x)
+            port_eeprom_path = eeprom_path.format(self.port_to_i2c_mapping[x])
             self.port_to_eeprom_mapping[x] = port_eeprom_path
-
-        # Set the SFP A2h i2c eeprom path
-        for y in range(0, self.qsfp_port_start):
-            if self.port_to_eeprom_mapping.has_key(y) :
-                self.port_to_eeprom_mapping[y] = [ self.port_to_eeprom_mapping[y] , sfp_a2_eeprom_path.format(y)]
-
-        # Set the QSFP Page03 i2c eeprom path
-        for z in range(self.qsfp_port_start, self.qsfp_port_end +1 ):
-            if self.port_to_eeprom_mapping.has_key(z) :
-                self.port_to_eeprom_mapping[z] = [ self.port_to_eeprom_mapping[z] , qsfp_p3_eeprom_path.format(z)]
-
         SfpUtilBase.__init__(self)
 
     def get_presence(self, port_num):
@@ -298,3 +290,87 @@ class SfpUtil(SfpUtilBase):
                         return True, port_dict
                     return False, {}
 
+    def _get_port_eeprom_path(self, port_num, devid):
+        sysfs_i2c_adapter_base_path = "/sys/class/i2c-adapter"
+
+        if port_num in self.port_to_eeprom_mapping.keys():
+            if devid == self.DOM_EEPROM_ADDR :
+                sysfs_sfp_i2c_client_eeprom_path = self.port_to_eeprom_mapping[port_num].replace("0050","0051")
+            else:
+                sysfs_sfp_i2c_client_eeprom_path = self.port_to_eeprom_mapping[port_num]
+        else:
+            sysfs_i2c_adapter_base_path = "/sys/class/i2c-adapter"
+
+            i2c_adapter_id = self._get_port_i2c_adapter_id(port_num)
+            if i2c_adapter_id is None:
+                print("Error getting i2c bus num")
+                return None
+
+            # Get i2c virtual bus path for the sfp
+            sysfs_sfp_i2c_adapter_path = "%s/i2c-%s" % (sysfs_i2c_adapter_base_path,
+                                                        str(i2c_adapter_id))
+
+            # If i2c bus for port does not exist
+            if not os.path.exists(sysfs_sfp_i2c_adapter_path):
+                print("Could not find i2c bus %s. Driver not loaded?" % sysfs_sfp_i2c_adapter_path)
+                return None
+
+            sysfs_sfp_i2c_client_path = "%s/%s-00%s" % (sysfs_sfp_i2c_adapter_path,
+                                                        str(i2c_adapter_id),
+                                                        hex(devid)[-2:])
+
+            # If sfp device is not present on bus, Add it
+            if not os.path.exists(sysfs_sfp_i2c_client_path):
+                ret = self._add_new_sfp_device(
+                        sysfs_sfp_i2c_adapter_path, devid)
+                if ret != 0:
+                    print("Error adding sfp device")
+                    return None
+
+            sysfs_sfp_i2c_client_eeprom_path = "%s/eeprom" % sysfs_sfp_i2c_client_path
+
+        return sysfs_sfp_i2c_client_eeprom_path
+
+    def get_eeprom_dict(self, port_num):
+        """Returns dictionary of interface and dom data.
+        format: {<port_num> : {'interface': {'version' : '1.0', 'data' : {...}},
+                               'dom' : {'version' : '1.0', 'data' : {...}}}}
+        """
+
+        sfp_data = {}
+
+        eeprom_ifraw = self.get_eeprom_raw(port_num)
+        eeprom_domraw = self.get_eeprom_dom_raw(port_num)
+
+        if eeprom_ifraw is None:
+            return None
+
+        if port_num in self.qsfp_ports:
+            sfpi_obj = sff8436InterfaceId(eeprom_ifraw)
+            if sfpi_obj is not None:
+                sfp_data['interface'] = sfpi_obj.get_data_pretty()
+            # For Qsfp's the dom data is part of eeprom_if_raw
+            # The first 128 bytes
+
+            sfpd_obj = sff8436Dom(eeprom_ifraw)
+            if sfpd_obj is not None:
+                sfp_data['dom'] = sfpd_obj.get_data_pretty()
+
+            if eeprom_domraw is not None:
+                sfpt_obj = sff8436DomThreshold(eeprom_domraw)
+                if sfpt_obj is not None:
+                    sfp_data['dom']["data"].update(sfpt_obj.get_data_pretty()["data"])
+
+            return sfp_data
+
+        sfpi_obj = sff8472InterfaceId(eeprom_ifraw)
+        if sfpi_obj is not None:
+            sfp_data['interface'] = sfpi_obj.get_data_pretty()
+            cal_type = sfpi_obj.get_calibration_type()
+
+        if eeprom_domraw is not None:
+            sfpd_obj = sff8472Dom(eeprom_domraw, cal_type)
+            if sfpd_obj is not None:
+                sfp_data['dom'] = sfpd_obj.get_data_pretty()
+
+        return sfp_data

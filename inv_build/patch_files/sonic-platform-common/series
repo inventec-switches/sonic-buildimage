@@ -4,5 +4,5 @@
 [order]
 sff8472-Fix-incorrect-VendorOUI-decode-type.patch
 Add-Wavelength-and-TX_Power-attribute.patch
-enhance-the-show-eeprom-command-to-decode-SFP-A2-pag.patch
+sff8436.py-Create-some-new-definition-for-sff8436.patch
 Enhance-the-SFP-QSFP-Connector-type-and-Extended-Rat.patch
