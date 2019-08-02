@@ -415,7 +415,6 @@ parsing_fan_present( char *attr, int index )
     // 1000 indicates that the fourth fan has been removed.
     // Therefore, we need to reverse the results to match customer needs.
     binary = result >> index;
-    MONITOR_INFO("parsing_fan_present binary(%d)=result(%d)>>index(%d).\n", binary, result, index);
     if (binary & 1)
         result=0 ;
     else
