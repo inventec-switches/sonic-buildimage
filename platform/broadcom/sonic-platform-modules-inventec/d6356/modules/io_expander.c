@@ -1,15 +1,14 @@
 #include <linux/slab.h>
 #include <linux/i2c.h>
 #include "io_expander.h"
-
 /* For build single module using (Ex: ONL platform) */
-//#include <linux/module.h>
+#include <linux/module.h>
 //#include <linux/inventec/d5254/io_expander.h>
 
 
 static struct ioexp_obj_s *ioexp_head_p = NULL;
 static struct ioexp_obj_s *ioexp_tail_p = NULL;
-
+extern int io_no_init;
 
 /* ========== Register IOEXP layout ==========
  */
@@ -781,6 +780,237 @@ struct ioexp_map_s ioexp_map_gulmohar_7abc = {
 };
 
 
+struct ioexp_map_s ioexp_map_gulmohar_2t_evt1_nabc = {
+
+    .chip_amount = 3,
+    .data_width  = 2,
+
+    .map_present    = { {0, 0, 2}, /* map_present[0] = MOD_ABS_PORT(X)   */
+                        {0, 0, 6}, /* map_present[1] = MOD_ABS_PORT(X+1) */
+                        {0, 1, 2}, /* map_present[2] = MOD_ABS_PORT(X+2) */
+                        {0, 1, 6}, /* map_present[3] = MOD_ABS_PORT(X+3) */
+                        {1, 0, 2}, /* map_present[4] = MOD_ABS_PORT(X+4) */
+                        {1, 0, 6}, /* map_present[5] = MOD_ABS_PORT(X+5) */
+                        {1, 1, 2}, /* map_present[6] = MOD_ABS_PORT(X+6) */
+                        {1, 1, 6}, /* map_present[7] = MOD_ABS_PORT(X+7) */
+    },
+    .map_tx_disable = { {0, 0, 1}, /* map_tx_disable[0] = TXDISABLE_SFP+_P(X)   */
+                        {0, 0, 5}, /* map_tx_disable[1] = TXDISABLE_SFP+_P(X+1) */
+                        {0, 1, 1}, /* map_tx_disable[2] = TXDISABLE_SFP+_P(X+2) */
+                        {0, 1, 5}, /* map_tx_disable[3] = TXDISABLE_SFP+_P(X+3) */
+                        {1, 0, 1}, /* map_tx_disable[4] = TXDISABLE_SFP+_P(X+4) */
+                        {1, 0, 5}, /* map_tx_disable[5] = TXDISABLE_SFP+_P(X+5) */
+                        {1, 1, 1}, /* map_tx_disable[6] = TXDISABLE_SFP+_P(X+6) */
+                        {1, 1, 5}, /* map_tx_disable[7] = TXDISABLE_SFP+_P(X+7) */
+    },
+    .map_tx_fault   = { {0, 0, 0}, /* map_tx_fault[0] = TXFAULT_SFP+_P(X)   */
+                        {0, 0, 4}, /* map_tx_fault[1] = TXFAULT_SFP+_P(X+1) */
+                        {0, 1, 0}, /* map_tx_fault[2] = TXFAULT_SFP+_P(X+2) */
+                        {0, 1, 4}, /* map_tx_fault[3] = TXFAULT_SFP+_P(X+3) */
+                        {1, 0, 0}, /* map_tx_fault[4] = TXFAULT_SFP+_P(X+4) */
+                        {1, 0, 4}, /* map_tx_fault[5] = TXFAULT_SFP+_P(X+5) */
+                        {1, 1, 0}, /* map_tx_fault[6] = TXFAULT_SFP+_P(X+6) */
+                        {1, 1, 4}, /* map_tx_fault[7] = TXFAULT_SFP+_P(X+7) */
+    },
+    .map_rxlos      = { {0, 0, 3}, /* map_rxlos[0] = OPRXLOS_PORT(X)   */
+                        {0, 0, 7}, /* map_rxlos[1] = OPRXLOS_PORT(X+1) */
+                        {0, 1, 3}, /* map_rxlos[2] = OPRXLOS_PORT(X+2) */
+                        {0, 1, 7}, /* map_rxlos[3] = OPRXLOS_PORT(X+3) */
+                        {1, 0, 3}, /* map_rxlos[4] = OPRXLOS_PORT(X+4) */
+                        {1, 0, 7}, /* map_rxlos[5] = OPRXLOS_PORT(X+5) */
+                        {1, 1, 3}, /* map_rxlos[6] = OPRXLOS_PORT(X+6) */
+                        {1, 1, 7}, /* map_rxlos[7] = OPRXLOS_PORT(X+7) */
+    },
+    .map_hard_rs0   = { {2, 0, 0}, /* map_hard_rs0[0] = RS0_SFP28_P(X)   */
+                        {2, 0, 2}, /* map_hard_rs0[1] = RS0_SFP28_P(X+1) */
+                        {2, 0, 4}, /* map_hard_rs0[2] = RS0_SFP28_P(X+2) */
+                        {2, 0, 6}, /* map_hard_rs0[3] = RS0_SFP28_P(X+3) */
+                        {2, 1, 0}, /* map_hard_rs0[4] = RS0_SFP28_P(X+4) */
+                        {2, 1, 2}, /* map_hard_rs0[5] = RS0_SFP28_P(X+5) */
+                        {2, 1, 4}, /* map_hard_rs0[6] = RS0_SFP28_P(X+6) */
+                        {2, 1, 6}, /* map_hard_rs0[7] = RS0_SFP28_P(X+7) */
+    },
+    .map_hard_rs1   = { {2, 0, 1}, /* map_hard_rs1[0] = RS1_SFP28_P(X)   */
+                        {2, 0, 3}, /* map_hard_rs1[1] = RS1_SFP28_P(X+1) */
+                        {2, 0, 5}, /* map_hard_rs1[2] = RS1_SFP28_P(X+2) */
+                        {2, 0, 7}, /* map_hard_rs1[3] = RS1_SFP28_P(X+3) */
+                        {2, 1, 1}, /* map_hard_rs1[4] = RS1_SFP28_P(X+4) */
+                        {2, 1, 3}, /* map_hard_rs1[5] = RS1_SFP28_P(X+5) */
+                        {2, 1, 5}, /* map_hard_rs1[6] = RS1_SFP28_P(X+6) */
+                        {2, 1, 7}, /* map_hard_rs1[7] = RS1_SFP28_P(X+7) */
+    },
+};
+
+
+struct ioexp_map_s ioexp_map_gulmohar_2t_evt1_1abc = {
+
+    .chip_amount = 3,
+    .data_width  = 2,
+
+    .map_present    = { {0, 0, 2}, /* map_present[0] = MOD_ABS_PORT(X)   */
+                        {0, 0, 6}, /* map_present[1] = MOD_ABS_PORT(X+1) */
+                        {0, 1, 2}, /* map_present[2] = MOD_ABS_PORT(X+2) */
+                        {0, 1, 6}, /* map_present[3] = MOD_ABS_PORT(X+3) */
+                        {1, 0, 4}, /* map_present[4] = MOD_ABS_PORT(X+4) */
+                        {1, 0, 5}, /* map_present[5] = MOD_ABS_PORT(X+5) */
+                        {1, 1, 4}, /* map_present[6] = MOD_ABS_PORT(X+6) */
+                        {1, 1, 5}, /* map_present[7] = MOD_ABS_PORT(X+7) */
+    },
+    .map_tx_disable = { {0, 0, 1}, /* map_tx_disable[0] = TXDISABLE_SFP+_P(X)   */
+                        {0, 0, 5}, /* map_tx_disable[1] = TXDISABLE_SFP+_P(X+1) */
+                        {0, 1, 1}, /* map_tx_disable[2] = TXDISABLE_SFP+_P(X+2) */
+                        {0, 1, 5}, /* map_tx_disable[3] = TXDISABLE_SFP+_P(X+3) */
+                        {1, 0, 2}, /* map_tx_disable[4] = TXDISABLE_SFP+_P(X+4) */
+                        {1, 0, 3}, /* map_tx_disable[5] = TXDISABLE_SFP+_P(X+5) */
+                        {1, 1, 2}, /* map_tx_disable[6] = TXDISABLE_SFP+_P(X+6) */
+                        {1, 1, 3}, /* map_tx_disable[7] = TXDISABLE_SFP+_P(X+7) */
+    },
+    .map_tx_fault   = { {0, 0, 0}, /* map_tx_fault[0] = TXFAULT_SFP+_P(X)   */
+                        {0, 0, 4}, /* map_tx_fault[1] = TXFAULT_SFP+_P(X+1) */
+                        {0, 1, 0}, /* map_tx_fault[2] = TXFAULT_SFP+_P(X+2) */
+                        {0, 1, 4}, /* map_tx_fault[3] = TXFAULT_SFP+_P(X+3) */
+                        {1, 0, 0}, /* map_tx_fault[4] = TXFAULT_SFP+_P(X+4) */
+                        {1, 0, 1}, /* map_tx_fault[5] = TXFAULT_SFP+_P(X+5) */
+                        {1, 1, 0}, /* map_tx_fault[6] = TXFAULT_SFP+_P(X+6) */
+                        {1, 1, 1}, /* map_tx_fault[7] = TXFAULT_SFP+_P(X+7) */
+    },
+    .map_rxlos      = { {0, 0, 3}, /* map_rxlos[0] = OPRXLOS_PORT(X)   */
+                        {0, 0, 7}, /* map_rxlos[1] = OPRXLOS_PORT(X+1) */
+                        {0, 1, 3}, /* map_rxlos[2] = OPRXLOS_PORT(X+2) */
+                        {0, 1, 7}, /* map_rxlos[3] = OPRXLOS_PORT(X+3) */
+                        {1, 0, 6}, /* map_rxlos[4] = OPRXLOS_PORT(X+4) */
+                        {1, 0, 7}, /* map_rxlos[5] = OPRXLOS_PORT(X+5) */
+                        {1, 1, 6}, /* map_rxlos[6] = OPRXLOS_PORT(X+6) */
+                        {1, 1, 7}, /* map_rxlos[7] = OPRXLOS_PORT(X+7) */
+    },
+    .map_hard_rs0   = { {2, 0, 0}, /* map_hard_rs0[0] = RS0_SFP28_P(X)   */
+                        {2, 0, 2}, /* map_hard_rs0[1] = RS0_SFP28_P(X+1) */
+                        {2, 0, 4}, /* map_hard_rs0[2] = RS0_SFP28_P(X+2) */
+                        {2, 0, 6}, /* map_hard_rs0[3] = RS0_SFP28_P(X+3) */
+                        {2, 1, 0}, /* map_hard_rs0[4] = RS0_SFP28_P(X+4) */
+                        {2, 1, 2}, /* map_hard_rs0[5] = RS0_SFP28_P(X+5) */
+                        {2, 1, 4}, /* map_hard_rs0[6] = RS0_SFP28_P(X+6) */
+                        {2, 1, 6}, /* map_hard_rs0[7] = RS0_SFP28_P(X+7) */
+    },
+    .map_hard_rs1   = { {2, 0, 1}, /* map_hard_rs1[0] = RS1_SFP28_P(X)   */
+                        {2, 0, 3}, /* map_hard_rs1[1] = RS1_SFP28_P(X+1) */
+                        {2, 0, 5}, /* map_hard_rs1[2] = RS1_SFP28_P(X+2) */
+                        {2, 0, 7}, /* map_hard_rs1[3] = RS1_SFP28_P(X+3) */
+                        {2, 1, 1}, /* map_hard_rs1[4] = RS1_SFP28_P(X+4) */
+                        {2, 1, 3}, /* map_hard_rs1[5] = RS1_SFP28_P(X+5) */
+                        {2, 1, 5}, /* map_hard_rs1[6] = RS1_SFP28_P(X+6) */
+                        {2, 1, 7}, /* map_hard_rs1[7] = RS1_SFP28_P(X+7) */
+    },
+};
+
+
+struct ioexp_map_s ioexp_map_gulmohar_2t_evt1_3abc = {
+
+    .chip_amount = 3,
+    .data_width  = 2,
+
+    .map_present    = { {0, 0, 4}, /* map_present[0] = MOD_ABS_PORT(X)   */
+                        {0, 0, 5}, /* map_present[1] = MOD_ABS_PORT(X+1) */
+                        {0, 1, 4}, /* map_present[2] = MOD_ABS_PORT(X+2) */
+                        {0, 1, 5}, /* map_present[3] = MOD_ABS_PORT(X+3) */
+                        {1, 0, 2}, /* map_present[4] = MOD_ABS_PORT(X+4) */
+                        {1, 0, 6}, /* map_present[5] = MOD_ABS_PORT(X+5) */
+                        {1, 1, 2}, /* map_present[6] = MOD_ABS_PORT(X+6) */
+                        {1, 1, 6}, /* map_present[7] = MOD_ABS_PORT(X+7) */
+    },
+    .map_tx_disable = { {0, 0, 2}, /* map_tx_disable[0] = TXDISABLE_SFP+_P(X)   */
+                        {0, 0, 3}, /* map_tx_disable[1] = TXDISABLE_SFP+_P(X+1) */
+                        {0, 1, 2}, /* map_tx_disable[2] = TXDISABLE_SFP+_P(X+2) */
+                        {0, 1, 3}, /* map_tx_disable[3] = TXDISABLE_SFP+_P(X+3) */
+                        {1, 0, 1}, /* map_tx_disable[4] = TXDISABLE_SFP+_P(X+4) */
+                        {1, 0, 5}, /* map_tx_disable[5] = TXDISABLE_SFP+_P(X+5) */
+                        {1, 1, 1}, /* map_tx_disable[6] = TXDISABLE_SFP+_P(X+6) */
+                        {1, 1, 5}, /* map_tx_disable[7] = TXDISABLE_SFP+_P(X+7) */
+    },
+    .map_tx_fault   = { {0, 0, 0}, /* map_tx_fault[0] = TXFAULT_SFP+_P(X)   */
+                        {0, 0, 1}, /* map_tx_fault[1] = TXFAULT_SFP+_P(X+1) */
+                        {0, 1, 0}, /* map_tx_fault[2] = TXFAULT_SFP+_P(X+2) */
+                        {0, 1, 1}, /* map_tx_fault[3] = TXFAULT_SFP+_P(X+3) */
+                        {1, 0, 0}, /* map_tx_fault[4] = TXFAULT_SFP+_P(X+4) */
+                        {1, 0, 4}, /* map_tx_fault[5] = TXFAULT_SFP+_P(X+5) */
+                        {1, 1, 0}, /* map_tx_fault[6] = TXFAULT_SFP+_P(X+6) */
+                        {1, 1, 4}, /* map_tx_fault[7] = TXFAULT_SFP+_P(X+7) */
+    },
+    .map_rxlos      = { {0, 0, 6}, /* map_rxlos[0] = OPRXLOS_PORT(X)   */
+                        {0, 0, 7}, /* map_rxlos[1] = OPRXLOS_PORT(X+1) */
+                        {0, 1, 6}, /* map_rxlos[2] = OPRXLOS_PORT(X+2) */
+                        {0, 1, 7}, /* map_rxlos[3] = OPRXLOS_PORT(X+3) */
+                        {1, 0, 3}, /* map_rxlos[4] = OPRXLOS_PORT(X+4) */
+                        {1, 0, 7}, /* map_rxlos[5] = OPRXLOS_PORT(X+5) */
+                        {1, 1, 3}, /* map_rxlos[6] = OPRXLOS_PORT(X+6) */
+                        {1, 1, 7}, /* map_rxlos[7] = OPRXLOS_PORT(X+7) */
+    },
+    .map_hard_rs0   = { {2, 0, 0}, /* map_hard_rs0[0] = RS0_SFP28_P(X)   */
+                        {2, 0, 2}, /* map_hard_rs0[1] = RS0_SFP28_P(X+1) */
+                        {2, 0, 4}, /* map_hard_rs0[2] = RS0_SFP28_P(X+2) */
+                        {2, 0, 6}, /* map_hard_rs0[3] = RS0_SFP28_P(X+3) */
+                        {2, 1, 0}, /* map_hard_rs0[4] = RS0_SFP28_P(X+4) */
+                        {2, 1, 2}, /* map_hard_rs0[5] = RS0_SFP28_P(X+5) */
+                        {2, 1, 4}, /* map_hard_rs0[6] = RS0_SFP28_P(X+6) */
+                        {2, 1, 6}, /* map_hard_rs0[7] = RS0_SFP28_P(X+7) */
+    },
+    .map_hard_rs1   = { {2, 0, 1}, /* map_hard_rs1[0] = RS1_SFP28_P(X)   */
+                        {2, 0, 3}, /* map_hard_rs1[1] = RS1_SFP28_P(X+1) */
+                        {2, 0, 5}, /* map_hard_rs1[2] = RS1_SFP28_P(X+2) */
+                        {2, 0, 7}, /* map_hard_rs1[3] = RS1_SFP28_P(X+3) */
+                        {2, 1, 1}, /* map_hard_rs1[4] = RS1_SFP28_P(X+4) */
+                        {2, 1, 3}, /* map_hard_rs1[5] = RS1_SFP28_P(X+5) */
+                        {2, 1, 5}, /* map_hard_rs1[6] = RS1_SFP28_P(X+6) */
+                        {2, 1, 7}, /* map_hard_rs1[7] = RS1_SFP28_P(X+7) */
+    },
+};
+
+
+
+struct ioexp_map_s ioexp_map_gulmohar_2t_evt1_7abc = {
+
+    .chip_amount    = 3,
+    .data_width     = 2,
+
+    .map_present    = { {0, 0, 4}, /* map_present[0] = MOD_ABS_PORT(X)   */
+                        {0, 1, 1}, /* map_present[1] = MOD_ABS_PORT(X+1) */
+                        {0, 1, 6}, /* map_present[2] = MOD_ABS_PORT(X+2) */
+                        {1, 0, 4}, /* map_present[3] = MOD_ABS_PORT(X+3) */
+                        {1, 1, 1}, /* map_present[4] = MOD_ABS_PORT(X+4) */
+                        {1, 1, 6}, /* map_present[5] = MOD_ABS_PORT(X+5) */
+                        {2, 0, 4}, /* map_present[6] = MOD_ABS_PORT(X+6) */
+                        {2, 1, 1}, /* map_present[7] = MOD_ABS_PORT(X+7) */
+    },
+    .map_reset      = { {0, 0, 1}, /* map_reset[0] = QRESET_QSFP_N_P(X)   */
+                        {0, 0, 6}, /* map_reset[1] = QRESET_QSFP_N_P(X+1) */
+                        {0, 1, 3}, /* map_reset[2] = QRESET_QSFP_N_P(X+2) */
+                        {1, 0, 1}, /* map_reset[3] = QRESET_QSFP_N_P(X+3) */
+                        {1, 0, 6}, /* map_reset[4] = QRESET_QSFP_N_P(X+4) */
+                        {1, 1, 3}, /* map_reset[5] = QRESET_QSFP_N_P(X+5) */
+                        {2, 0, 1}, /* map_reset[6] = QRESET_QSFP_N_P(X+6) */
+                        {2, 0, 6}, /* map_reset[7] = QRESET_QSFP_N_P(X+7) */
+    },
+    .map_lpmod      = { {0, 0, 2}, /* map_lpmod[0] = LPMODE_QSFP_P(X)   */
+                        {0, 0, 7}, /* map_lpmod[1] = LPMODE_QSFP_P(X+1) */
+                        {0, 1, 4}, /* map_lpmod[2] = LPMODE_QSFP_P(X+2) */
+                        {1, 0, 2}, /* map_lpmod[3] = LPMODE_QSFP_P(X+3) */
+                        {1, 0, 7}, /* map_lpmod[4] = LPMODE_QSFP_P(X+4) */
+                        {1, 1, 4}, /* map_lpmod[5] = LPMODE_QSFP_P(X+5) */
+                        {2, 0, 2}, /* map_lpmod[6] = LPMODE_QSFP_P(X+6) */
+                        {2, 0, 7}, /* map_lpmod[7] = LPMODE_QSFP_P(X+7) */
+    },
+    .map_modsel     = { {0, 0, 0}, /* map_modsel[0] = MODSEL_QSFP_N_P(X)   */
+                        {0, 0, 5}, /* map_modsel[1] = MODSEL_QSFP_N_P(X+1) */
+                        {0, 1, 2}, /* map_modsel[2] = MODSEL_QSFP_N_P(X+2) */
+                        {1, 0, 0}, /* map_modsel[3] = MODSEL_QSFP_N_P(X+3) */
+                        {1, 0, 5}, /* map_modsel[4] = MODSEL_QSFP_N_P(X+4) */
+                        {1, 1, 2}, /* map_modsel[5] = MODSEL_QSFP_N_P(X+5) */
+                        {2, 0, 0}, /* map_modsel[6] = MODSEL_QSFP_N_P(X+6) */
+                        {2, 0, 5}, /* map_modsel[7] = MODSEL_QSFP_N_P(X+7) */
+    },
+};
+
+
 /* PortType: SFP / 8 port
  * Platform: Cypress, Peony_SFP
  */
@@ -1335,32 +1565,35 @@ common_ioexp_init(struct ioexp_obj_s *self) {
     if (self->mode == IOEXP_MODE_DIRECT) {
         goto update_common_ioexp_init;
     }
-    /* Setup default value to each physical IO Expander */
-    for (chip_id=0; chip_id<(self->ioexp_map_p->chip_amount); chip_id++){
-        /* Get address mapping */
-        addr_p = &(self->ioexp_map_p->map_addr[chip_id]);
-        if (!addr_p){
-            SWPS_ERR("%s: IOEXP config incorrect! <chip_id>:%d \n",
-                     __func__, chip_id);
-            return -1;
-        }
-        /* Setup default value */
-        for (offset=0; offset<(self->ioexp_map_p->data_width); offset++){
-            
-            /* [Desc] Skip the setup default value behavior
-               [Note] Setup default value = -1 if you don't want to write the value to IOEXP or CPLD
-            */
-            if(addr_p->write_offset[offset] < 0){ 
-                SWPS_DEBUG("skip a write_offset <%d>\n", addr_p->conf_offset[offset]);
-                continue;
+    if (!io_no_init) { /*normal init*/
+
+        /* Setup default value to each physical IO Expander */
+        for (chip_id=0; chip_id<(self->ioexp_map_p->chip_amount); chip_id++){
+            /* Get address mapping */
+            addr_p = &(self->ioexp_map_p->map_addr[chip_id]);
+            if (!addr_p){
+                SWPS_ERR("%s: IOEXP config incorrect! <chip_id>:%d \n",
+                         __func__, chip_id);
+                return -1;
             }
-            err_code = i2c_smbus_write_byte_data(_get_i2c_client(self, chip_id),
-                                                 addr_p->write_offset[offset],
-                                                 addr_p->data_default[offset]);
-            if (err_code < 0){
-                SWPS_ERR("%s: set default fail! <error>:%d \n",
-                         __func__, err_code);
-                return ERR_IOEXP_UNEXCPT;
+            /* Setup default value */
+            for (offset=0; offset<(self->ioexp_map_p->data_width); offset++){
+
+                /* [Desc] Skip the setup default value behavior
+                   [Note] Setup default value = -1 if you don't want to write the value to IOEXP or CPLD
+                */
+                if(addr_p->write_offset[offset] < 0){
+                    SWPS_DEBUG("skip a write_offset <%d>\n", addr_p->conf_offset[offset]);
+                    continue;
+                }
+                err_code = i2c_smbus_write_byte_data(_get_i2c_client(self, chip_id),
+                                                     addr_p->write_offset[offset],
+                                                     addr_p->data_default[offset]);
+                if (err_code < 0){
+                    SWPS_ERR("%s: set default fail! <error>:%d \n",
+                             __func__, err_code);
+                    return ERR_IOEXP_UNEXCPT;
+                }
             }
         }
     }
@@ -1657,6 +1890,14 @@ get_ioexp_map(int ioexp_type){
             return &ioexp_map_gulmohar_nabc;
         case IOEXP_TYPE_GULMOHAR_7ABC:
             return &ioexp_map_gulmohar_7abc;
+        case IOEXP_TYPE_GULMOHAR_2T_EVT1_NABC:
+            return &ioexp_map_gulmohar_2t_evt1_nabc;
+        case IOEXP_TYPE_GULMOHAR_2T_EVT1_1ABC:
+            return &ioexp_map_gulmohar_2t_evt1_1abc;
+        case IOEXP_TYPE_GULMOHAR_2T_EVT1_3ABC:
+            return &ioexp_map_gulmohar_2t_evt1_3abc;
+        case IOEXP_TYPE_GULMOHAR_2T_EVT1_7ABC:
+            return &ioexp_map_gulmohar_2t_evt1_7abc;
         case IOEXP_TYPE_SFP_8P_LAYOUT_1:
             return &ioexp_map_sfp_8p_layout_1;
         case IOEXP_TYPE_QSFP_6P_LAYOUT_1:
@@ -1748,6 +1989,9 @@ setup_ioexp_public_cb(struct ioexp_obj_s *self,
 
         case IOEXP_TYPE_MAPLE_NABC:
         case IOEXP_TYPE_GULMOHAR_NABC:
+        case IOEXP_TYPE_GULMOHAR_2T_EVT1_NABC:
+        case IOEXP_TYPE_GULMOHAR_2T_EVT1_1ABC:
+        case IOEXP_TYPE_GULMOHAR_2T_EVT1_3ABC:
         case IOEXP_TYPE_SFP_8P_LAYOUT_1:
             self->get_present    = common_get_present;
             self->get_tx_fault   = common_get_tx_fault;
@@ -1779,6 +2023,7 @@ setup_ioexp_public_cb(struct ioexp_obj_s *self,
         case IOEXP_TYPE_LAVENDER_P65:
         case IOEXP_TYPE_MAPLE_0ABC:
         case IOEXP_TYPE_GULMOHAR_7ABC:
+        case IOEXP_TYPE_GULMOHAR_2T_EVT1_7ABC:
         case IOEXP_TYPE_QSFP_6P_LAYOUT_1:
             self->get_present    = common_get_present;
             self->get_tx_fault   = ioexp_get_not_support;
@@ -1828,6 +2073,10 @@ setup_ioexp_private_cb(struct ioexp_obj_s *self,
         case IOEXP_TYPE_MAPLE_0ABC:
         case IOEXP_TYPE_GULMOHAR_NABC:
         case IOEXP_TYPE_GULMOHAR_7ABC:
+        case IOEXP_TYPE_GULMOHAR_2T_EVT1_NABC:
+        case IOEXP_TYPE_GULMOHAR_2T_EVT1_1ABC:
+        case IOEXP_TYPE_GULMOHAR_2T_EVT1_3ABC:
+        case IOEXP_TYPE_GULMOHAR_2T_EVT1_7ABC:
         case IOEXP_TYPE_SFP_8P_LAYOUT_1:
         case IOEXP_TYPE_QSFP_6P_LAYOUT_1:
             self->init           = common_ioexp_init;
@@ -1919,6 +2168,11 @@ setup_ioexp_config(struct ioexp_obj_s *self) {
 
     int chip_id, offset, err_code;
     struct ioexp_addr_s *addr_p;
+    if (io_no_init) {
+
+        SWPS_INFO("io_no_init:%d \n", io_no_init);
+        return 0;
+    }
 
     for (chip_id=0; chip_id<(self->ioexp_map_p->chip_amount); chip_id++){
         addr_p = &(self->ioexp_map_p->map_addr[chip_id]);
@@ -2274,6 +2528,7 @@ _scan_channel_tier_1_single(void) {
     client->adapter = adap;
     client->addr = fake_addr;
     /* Fouce move ioexp ptr to next */
+    /*note this one will always fail so, dont need retry*/
     ret = i2c_smbus_read_byte_data(client, fake_offs);
     SWPS_DEBUG("%s: move ioexp_ptr done. <ret>:%d\n", __func__, ret);
     kfree(client);
@@ -2311,7 +2566,7 @@ EXPORT_SYMBOL(resync_channel_tier_1);
 
 
 /* For build single module using (Ex: ONL platform) */
-//MODULE_LICENSE("GPL");
+MODULE_LICENSE("GPL");
 
 
 

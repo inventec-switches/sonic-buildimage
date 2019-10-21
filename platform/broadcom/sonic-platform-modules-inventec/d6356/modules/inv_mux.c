@@ -8,7 +8,7 @@
 #include "inv_mux.h"
 
 /* For build single module using (Ex: ONL platform) */
-//#include <linux/module.h>
+#include <linux/module.h>
 //#include <linux/inventec/d5254/io_expander.h>
 //#include <linux/inventec/d5254/inv_mux.h>
 
@@ -396,10 +396,10 @@ _setup_muxctl_cb(struct mux_obj_s *self,
             snprintf(mod_dsc, 31, "Hedera force mode");
             goto ok_setup_muxctl_cb;
 
-        case MUX_RST_GPIO_48_PAC9548:
-        case MUX_RST_GPIO_69_PAC9548:
+        case MUX_RST_GPIO_48_PCA9548:
+        case MUX_RST_GPIO_69_PCA9548:
         case MUX_RST_GPIO_249_PCA9548:
-        case MUX_RST_GPIO_500_PAC9548:
+        case MUX_RST_GPIO_500_PCA9548:
         case MUX_RST_GPIO_505_PCA9548:
             self->gpio_num   = gpio;
             self->_pull_low  = normal_gpio_pull_low;
@@ -540,7 +540,7 @@ EXPORT_SYMBOL(init_mux_objs);
  * => You need to declare MODULE_LICENSE If you want to build single module along.
  * => Ex: For ONL platform
  */
-//MODULE_LICENSE("GPL");
+MODULE_LICENSE("GPL");
 
 
 

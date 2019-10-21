@@ -10,10 +10,10 @@
 #define MUX_RST_GPIO_FORCE                 (30100)
 #define MUX_RST_GPIO_FORCE_RANGELEY        (30101)
 #define MUX_RST_GPIO_FORCE_HEDERA          (30102)
-#define MUX_RST_GPIO_48_PAC9548               (48)
-#define MUX_RST_GPIO_69_PAC9548               (69)
+#define MUX_RST_GPIO_48_PCA9548               (48)
+#define MUX_RST_GPIO_69_PCA9548               (69)
 #define MUX_RST_GPIO_249_PCA9548             (249)
-#define MUX_RST_GPIO_500_PAC9548             (500)
+#define MUX_RST_GPIO_500_PCA9548             (500)
 #define MUX_RST_GPIO_505_PCA9548             (505)
 #define MUX_RST_CPLD_C0_A77_70_74_RST_ALL  (30201)
 
