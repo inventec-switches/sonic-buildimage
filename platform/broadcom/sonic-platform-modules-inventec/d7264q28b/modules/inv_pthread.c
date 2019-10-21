@@ -306,6 +306,7 @@ inventec_class_exit(void)
     printk(KERN_INFO "[p_thread] [%s/%d] Remove module.\n",__func__,__LINE__);
 }
 
+
 /* fan device *************************************/
 #define FAN_DEV_PATH_STATE	"/sys/class/hwmon/hwmon%d/fan_gpi"
 #define FAN_DEV_PATH_FAN1_INPUT "/sys/class/hwmon/hwmon%d/fan1_input"
@@ -340,44 +341,44 @@ void sysfs_fan_path_init(void)
     sprintf(&fan_dev_path_fan8_input[0],FAN_DEV_PATH_FAN8_INPUT, get_hwm_psoc());
 }
 
-#define FAN_STATE_NORMAL	"normal"
-#define FAN_STATE_FAULTY	"faulty"
-#define FAN_STATE_UNINSTALLED	"uninstalled"
-#define FAN_STATE_UNKNOW	"unknown state"
-#define FAN_STATE_INVALID	"Invalid state value"
-#define FAN_STATE_READ_ERROR	"state read error"
+#define FAN_STATE_NORMAL        "normal"
+#define FAN_STATE_FAULTY        "faulty"
+#define FAN_STATE_UNINSTALLED   "uninstalled"
+#define FAN_STATE_UNKNOW        "unknown state"
+#define FAN_STATE_INVALID       "Invalid state value"
+#define FAN_STATE_READ_ERROR    "state read error"
 
-#define FAN_LOG_UNINSTALLED	"removed"
-#define FAN_LOG_NORMAL		"inserted"
+#define FAN_STATE_RETRY         3
+
+#define FAN_LOG_UNINSTALLED     "removed"
+#define FAN_LOG_NORMAL          "inserted"
 
 //#define FAN_STATE_BIT_NORMAL		0
-#define FAN_STATE_BIT_FAULTY		0
-#define FAN_STATE_BIT_UNINSTALLED	1
-#define FAN_STATE_BIT_UNKNOW		2
-#define FAN_STATE_BIT_INVALID		3
-#define FAN_STATE_BIT_READ_ERROR	4
+#define FAN_STATE_BIT_FAULTY        0
+#define FAN_STATE_BIT_UNINSTALLED   1
+#define FAN_STATE_BIT_UNKNOW        2
+#define FAN_STATE_BIT_INVALID       3
+#define FAN_STATE_BIT_READ_ERROR    4
 
 static struct fans_tbl_s {
         char *fan_name;
         char *fan_front;
         char *fan_rear;
         unsigned int fan_state;
+        int retry;
 } fans_tbl[] = {
-        {"fan1",	fan_dev_path_fan1_input,
-			fan_dev_path_fan2_input,	0},
-        {"fan2",	fan_dev_path_fan3_input,
-			fan_dev_path_fan4_input,	0},
-        {"fan3",	fan_dev_path_fan5_input,
-			fan_dev_path_fan6_input,	0},
-        {"fan4",	fan_dev_path_fan7_input,
-			fan_dev_path_fan8_input,	0},
+        {"fan1", fan_dev_path_fan1_input, fan_dev_path_fan2_input, 0, 0},
+        {"fan2", fan_dev_path_fan3_input, fan_dev_path_fan4_input, 0, 0},
+        {"fan3", fan_dev_path_fan5_input, fan_dev_path_fan6_input, 0, 0},
+        {"fan4", fan_dev_path_fan7_input, fan_dev_path_fan8_input, 0, 0},
 };
+
 #define FAN_TBL_TOTAL	( sizeof(fans_tbl)/ sizeof(const struct fans_tbl_s) )
 
-#define FAN_STATE_CHECK(i,b)	(fans_tbl[i].fan_state & (1<<b))
-#define FAN_STATE_SET(i,b)	(fans_tbl[i].fan_state |= (1<<b))
-#define FAN_STATE_CLEAR(i,b)	(fans_tbl[i].fan_state &= ~(1<<b))
-#define FAN_STATE_INIT(i)	(fans_tbl[i].fan_state = 0)
+#define FAN_STATE_CHECK(i,b)        (fans_tbl[i].fan_state & (1<<b))
+#define FAN_STATE_SET(i,b)          (fans_tbl[i].fan_state |= (1<<b))
+#define FAN_STATE_CLEAR(i,b)        (fans_tbl[i].fan_state &= ~(1<<b))
+#define FAN_STATE_INIT(i)           (fans_tbl[i].fan_state = 0)
 
 static int
 fans_faulty_log(int fan_id)
@@ -387,41 +388,49 @@ fans_faulty_log(int fan_id)
 
     memset(&buf[0], 0, MAX_ACC_SIZE);
     if (inventec_show_attr(buf, fans_tbl[fan_id].fan_front) < 0) {
-	if(!FAN_STATE_CHECK(fan_id, FAN_STATE_BIT_READ_ERROR)) {
-	    FAN_STATE_SET(fan_id, FAN_STATE_BIT_READ_ERROR);
-	    SYSFS_LOG("[p_thread] %s: front %s\n",fans_tbl[fan_id].fan_name,FAN_STATE_READ_ERROR);
-	}
-	return 1;
+        if(!FAN_STATE_CHECK(fan_id, FAN_STATE_BIT_READ_ERROR)) {
+            FAN_STATE_SET(fan_id, FAN_STATE_BIT_READ_ERROR);
+            SYSFS_LOG("[p_thread] %s: front %s\n",fans_tbl[fan_id].fan_name,FAN_STATE_READ_ERROR);
+        }
+        return 1;
     }
+
     pwm = simple_strtol(buf, NULL, 10);
     if (pwm <= 0) {
-	if(!FAN_STATE_CHECK(fan_id, FAN_STATE_BIT_FAULTY)) {
-	    FAN_STATE_SET(fan_id, FAN_STATE_BIT_FAULTY);
-	    //SYSFS_LOG("[p_thread] %s: %s\n",fans_tbl[fan_id].fan_name,FAN_STATE_FAULTY);
-	}
-	return 1;
+        if(!FAN_STATE_CHECK(fan_id, FAN_STATE_BIT_FAULTY) && fans_tbl[fan_id].retry == FAN_STATE_RETRY) {
+            FAN_STATE_SET(fan_id, FAN_STATE_BIT_FAULTY);
+            SYSFS_LOG("[p_thread] %s-front: %s\n", fans_tbl[fan_id].fan_name, FAN_STATE_FAULTY);
+	    }
+        fans_tbl[fan_id].retry += 1;
+        return 1;
     }
 
     memset(&buf[0], 0, MAX_ACC_SIZE);
     if (inventec_show_attr(buf, fans_tbl[fan_id].fan_rear) < 0) {
-	if(!FAN_STATE_CHECK(fan_id, FAN_STATE_BIT_READ_ERROR)) {
-	    FAN_STATE_SET(fan_id, FAN_STATE_BIT_READ_ERROR);
-	    SYSFS_LOG("[p_thread] %s: rear %s\n",fans_tbl[fan_id].fan_name,FAN_STATE_READ_ERROR);
-	}
-	return 1;
+        if(!FAN_STATE_CHECK(fan_id, FAN_STATE_BIT_READ_ERROR)) {
+            FAN_STATE_SET(fan_id, FAN_STATE_BIT_READ_ERROR);
+            SYSFS_LOG("[p_thread] %s: rear %s\n", fans_tbl[fan_id].fan_name, FAN_STATE_READ_ERROR);
+        }
+        return 1;
     }
+
     pwm = simple_strtol(buf, NULL, 10);
     if (pwm <= 0) {
-	if(!FAN_STATE_CHECK(fan_id, FAN_STATE_BIT_FAULTY)) {
-	    FAN_STATE_SET(fan_id, FAN_STATE_BIT_FAULTY);
-	    //SYSFS_LOG("[p_thread] %s: %s\n",fans_tbl[fan_id].fan_name,FAN_STATE_FAULTY);
-	}
-	return 1;
+        if(!FAN_STATE_CHECK(fan_id, FAN_STATE_BIT_FAULTY) && fans_tbl[fan_id].retry == FAN_STATE_RETRY) {
+            FAN_STATE_SET(fan_id, FAN_STATE_BIT_FAULTY);
+            SYSFS_LOG("[p_thread] %s-rear: %s\n", fans_tbl[fan_id].fan_name, FAN_STATE_FAULTY);
+        }
+        fans_tbl[fan_id].retry += 1;
+        return 1;
     }
 
     if(fans_tbl[fan_id].fan_state != 0) {
-	fans_tbl[fan_id].fan_state = 0;
-	SYSFS_LOG("[p_thread] %s: %s\n",fans_tbl[fan_id].fan_name,FAN_LOG_NORMAL);
+        fans_tbl[fan_id].retry = 0;
+        FAN_STATE_INIT(fan_id);
+        SYSFS_LOG("[p_thread] %s: %s\n", fans_tbl[fan_id].fan_name, FAN_LOG_NORMAL);
+    }
+    else {
+        fans_tbl[fan_id].retry = 0;
     }
     return 0;
 }
@@ -434,45 +443,40 @@ fans_control_log(int fan_id)
     unsigned int statebit2, statebit3, bitshift;
 
     if (inventec_show_attr(buf, fan_dev_path_state) < 0) {
-	SYSFS_LOG("[p_thread] read fan_gpi failed\n");
-	return 1;
+        SYSFS_LOG("[p_thread] read fan_gpi failed\n");
+        return 1;
     }
 
     if (buf[0] != '0' || (buf[1] != 'x' && buf[1] != 'X')) {
-	SYSFS_LOG("[p_thread] %s/%d: %s %s\n",__func__,__LINE__,FAN_STATE_INVALID, buf);
-	return 1;
+        SYSFS_LOG("[p_thread] %s/%d: %s %s\n",__func__,__LINE__,FAN_STATE_INVALID, buf);
+        return 1;
     }
 
     if ((statebit2 = inventec_singlechar_to_int(buf[2])) == -1) {
-	SYSFS_LOG("[p_thread] Error value read from %s\n", fan_dev_path_state);
-	return 1;
+        SYSFS_LOG("[p_thread] Error value read from %s\n", fan_dev_path_state);
+        return 1;
     }
-    if (buf[2] == 'f' || buf[2] == 'F') statebit2 = 0;
+
+    if (buf[2] == 'f' || buf[2] == 'F') {
+        statebit2 = 0;
+    }
 
     if ((statebit3 = inventec_singlechar_to_int(buf[3])) == -1) {
-	SYSFS_LOG("[p_thread] Error value read from %s\n", fan_dev_path_state);
-	return 1;
+        SYSFS_LOG("[p_thread] Error value read from %s\n", fan_dev_path_state);
+        return 1;
     }
 
     bitshift = fan_id;
-    //SYSFS_LOG("[p_thread] 1: statebit2 = 0x%x statebit3 = 0x%x bitshift = 0x%x\n",statebit2,statebit3,bitshift);
+    //SYSFS_LOG("[p_thread] 1: statebit2 = 0x%x statebit3 = 0x%x bitshift = 0x%x\n", statebit2, statebit3, bitshift);
     if ((statebit2 & 1<<bitshift) && (statebit3 & 1<<bitshift)) {
-	if(!FAN_STATE_CHECK(fan_id, FAN_STATE_BIT_UNINSTALLED)) {
-	    FAN_STATE_SET(fan_id, FAN_STATE_BIT_UNINSTALLED);
-	    SYSFS_LOG("[p_thread] %s: %s\n",fans_tbl[fan_id].fan_name,FAN_LOG_UNINSTALLED);
-	}
-	return 1;
-    }
-    else
-    if (!(statebit2 & 1<<bitshift) && !(statebit3 & 1<<bitshift)) {
-	return fans_faulty_log(fan_id);
+	    if(!FAN_STATE_CHECK(fan_id, FAN_STATE_BIT_UNINSTALLED)) {
+	        FAN_STATE_SET(fan_id, FAN_STATE_BIT_UNINSTALLED);
+	        SYSFS_LOG("[p_thread] %s: %s\n", fans_tbl[fan_id].fan_name, FAN_LOG_UNINSTALLED);
+	    }
+        return 1;
     }
     else {
-	if(!FAN_STATE_CHECK(fan_id, FAN_STATE_BIT_FAULTY)) {
-	    FAN_STATE_SET(fan_id, FAN_STATE_BIT_FAULTY);
-	    SYSFS_LOG("[p_thread] %s: %s\n",fans_tbl[fan_id].fan_name,FAN_STATE_FAULTY);
-	}
-	return 1;
+	    return fans_faulty_log(fan_id);
     }
     return 0;
 }
@@ -507,8 +511,8 @@ int fans_control(void)
     }
     return ret;
 }
-
 /* End of faninfo_device */
+
 
 static int __init
 fan_device_init(void)
@@ -519,12 +523,12 @@ fan_device_init(void)
     return 0;
 }
 
-
 static void __exit
 fan_device_exit(void)
 {
     printk(KERN_INFO "[p_thread] Remove fan module.\n");
 }
+
 
 /* psu device *************************************/
 static unsigned int psu_voltin = 0;
@@ -808,7 +812,6 @@ int psus_control(int log_only)
     }
     return 0;
 }
-
 /* End of psuinfo_device */
 
 static int __init
@@ -820,12 +823,12 @@ psu_device_init(void)
     return 0;
 }
 
-
 static void __exit
 psu_device_exit(void)
 {
     printk(KERN_INFO "[p_thread] Remove psu module.\n");
 }
+
 
 /* led device *************************************/
 #define STATUS_LED_GRN_PATH	"/sys/class/hwmon/hwmon%d/device/grn_led"
@@ -1066,7 +1069,6 @@ void sys_ready(void)
     }
     SYSFS_LOG("[p_thread] set ctl successfully");
 }
-
 /* End of ledinfo_device */
 
 static int __init
@@ -1079,12 +1081,12 @@ led_device_init(void)
     return 0;
 }
 
-
 static void __exit
 led_device_exit(void)
 {
     printk(KERN_INFO "[p_thread] Remove led module.\n");
 }
+
 
 /* sensor device **********************************/
 #define SENSOR_DEV_PATH_SWITCH_TEMP	"/sys/class/hwmon/hwmon%d/device/switch_tmp"
@@ -1105,6 +1107,7 @@ void switch_temp_update(void)
         inventec_store_attr(&buf[0], count, sensor_dev_path_switch_temp);
     }
 }
+
 
 /**************************************************/
 /* From system_device */
