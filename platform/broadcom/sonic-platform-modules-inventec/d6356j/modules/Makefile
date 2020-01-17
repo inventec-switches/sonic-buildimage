@@ -1,0 +1,12 @@
+obj-m += ucd9000.o
+obj-m += i2c-mux-pca9541.o
+obj-m += gpio-ich.o
+obj-m += lpc_ich.o
+obj-m += inv_cpld.o
+obj-m += inv_platform.o
+obj-m += inv_eeprom.o
+obj-m += inv_psu.o
+obj-m += swps.o
+obj-m += monitor.o
+swps-objs := inv_swps.o inv_mux.o io_expander.o transceiver.o sff_io.o
+monitor-objs := inv_monitor.o inv_proxy.o

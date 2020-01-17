@@ -40,6 +40,7 @@ INV_MAGNOLIA            = "SONiC-Inventec-d6254qs"
 INV_REDWOOD             = "SONiC-Inventec-d7032-100"
 INV_CYPRESS             = "SONiC-Inventec-d7054"
 INV_MAPLE               = "SONiC-Inventec-d6356"
+INV_MAPLE_J             = "SONiC-Inventec-d6356j"
 INV_MAPLE_EVT1          = "SONiC-Inventec-d6556"
 INV_SEQUOIA             = "SONiC-Inventec-d7264"
 BOARD_TPYE              = ""
@@ -158,12 +159,7 @@ def _board_init():
         #led process is controlled by data ram automatically
         exit(0)
 
-    elif platform.rstrip() == INV_MAPLE:
-        BOARD_TPYE = "inventec_d6356"
-        fp = open('/usr/share/sonic/device/x86_64-inventec_d6356-r0/led_proc_init.soc', "r")
-        _remap_registers(fp)
-        #led process: m0 led process that is controlled by linkscan_led_fw.bin and custom_led.bin
-        syslog.syslog(syslog.LOG_INFO, "Found device: {0}".format(BOARD_TPYE))
+    elif platform.rstrip() == INV_MAPLE or platform.rstrip() == INV_MAPLE_J:
         exit(0)
 
     elif platform.rstrip() == INV_MAPLE_EVT1:

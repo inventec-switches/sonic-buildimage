@@ -23,6 +23,7 @@ $(SONIC_ONE_IMAGE)_LAZY_INSTALLS += $(DELL_S6000_PLATFORM_MODULE) \
                                $(INVENTEC_D7054Q28B_PLATFORM_MODULE) \
                                $(INVENTEC_D6254QS_PLATFORM_MODULE) \
                                $(INVENTEC_D6356_PLATFORM_MODULE) \
+                               $(INVENTEC_D6356J_PLATFORM_MODULE) \
                                $(INVENTEC_D6556_PLATFORM_MODULE) \
                                $(INVENTEC_D7264Q28B_PLATFORM_MODULE) \
                                $(CEL_DX010_PLATFORM_MODULE) \
