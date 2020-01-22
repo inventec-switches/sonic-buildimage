@@ -42,6 +42,7 @@ INV_MAPLE               = "x86_64-inventec_d6356-r0"
 INV_MAPLE_J             = "x86_64-inventec_d6356j-r0"
 INV_MAPLE_EVT1          = "x86_64-inventec_d6556-r0"
 INV_SEQUOIA             = "x86_64-inventec_d7264q28b-r0"
+INV_SEQUOIA_NEW         = "x86_64-inventec_d7264-r0"
 
 #define daemon
 PLATFROM                = None
@@ -129,6 +130,16 @@ def platform_path_init():
         LED_PIDFILE     = '{0}/led_proc'.format(PID_PATH)
         SWPS_DAEMON     = '{0}/transceiver_monitor.py'.format(BASE_PATH)
         SWPS_PIDFILE    = '{0}/transceiver_monitor'.format(PID_PATH)
+    elif platformName.rstrip() == INV_SEQUOIA_NEW:
+        msg_to_syslog('info', "found platform: {0}".format(INV_SEQUOIA_NEW))
+        PLATFROM        = INV_SEQUOIA_NEW
+        BASE_PATH       = '/usr/share/sonic/device/{0}/plugins'.format(PLATFROM)
+        ASIC_DAEMON     = '{0}/asic_monitor.py'.format(BASE_PATH)
+        ASIC_PIDFILE    = '{0}/asic_monitor'.format(PID_PATH)
+        LED_DAEMON      = '{0}/led_proc.py'.format(BASE_PATH)
+        LED_PIDFILE     = '{0}/led_proc'.format(PID_PATH)
+        SWPS_DAEMON     = '{0}/swps_monitor.py'.format(BASE_PATH)
+        SWPS_PIDFILE    = '{0}/swps_monitor'.format(PID_PATH)
     elif platformName.rstrip() == INV_MAPLE_J:
         msg_to_syslog('info', "found platform: {0}".format(INV_MAPLE))
         PLATFROM        = INV_MAPLE_J

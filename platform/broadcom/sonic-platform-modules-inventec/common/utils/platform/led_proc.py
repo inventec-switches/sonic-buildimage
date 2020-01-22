@@ -154,7 +154,7 @@ def _board_init():
         EAGLE_CORE      = [66, 100]
 
     elif platform.rstrip() == INV_SEQUOIA:
-        BOARD_TPYE = "inventec_d7264q28b"
+        BOARD_TPYE = "inventec_d7264"
         #load prog and remap port order in led_proc_init.soc
         #led process is controlled by data ram automatically
         exit(0)

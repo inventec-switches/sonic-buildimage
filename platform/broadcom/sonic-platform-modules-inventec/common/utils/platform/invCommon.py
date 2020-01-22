@@ -13,6 +13,7 @@ class InvPlatform():
     inv_maple_j         = "x86_64-inventec_d6356j-r0"
     inv_maple_evt1      = "x86_64-inventec_d6556-r0"
     inv_sequoia         = "x86_64-inventec_d7264q28b-r0"
+    inv_sequoia_new     = "x86_64-inventec_d7264-r0"
 
 
     def get_platform(self):

@@ -33,6 +33,7 @@ args = []
 INV_REDWOOD_PLATFORM      = "x86_64-inventec_d7032q28b-r0"
 INV_CYPRESS_PLATFORM      = "x86_64-inventec_d7054q28b-r0"
 INV_SEQUOIA_PLATFORM      = "x86_64-inventec_d7264q28b-r0"
+INV_SEQUOIA_NEW_PLATFORM  = "x86_64-inventec_d7264-r0"
 INV_MAPLE_PLATFORM        = "x86_64-inventec_d6356-r0"
 INV_MAPLE_J_PLATFORM      = "x86_64-inventec_d6356j-r0"
 INV_MAPLE_EVT1_PLATFORM   = "x86_64-inventec_d6556-r0"
@@ -98,7 +99,7 @@ def main():
                     if PSOC_NAME in file_list :
                         with open( "{0}/{1}/device/{2}".format(HWMON_PATH, index, PSOC_NAME), 'rb') as readPtr:
                             content = readPtr.read().strip()
-                            if bcm_obj.get_platform() == INV_SEQUOIA_PLATFORM :
+                            if bcm_obj.get_platform() == INV_SEQUOIA_PLATFORM or bcm_obj.get_platform() == INV_SEQUOIA_NEW_PLATFORM:
                                 if content == "inv_bmc" and SWITCH_TEMP_FILE_NAME in file_list :
                                     os.system("echo {0} > {1}/{2}/device/{3}".format( ( bcm_obj.get_asic_temperature() * 1000 ), HWMON_PATH, index, SWITCH_TEMP_FILE_NAME ))
                                     break
