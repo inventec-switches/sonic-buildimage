@@ -11,6 +11,9 @@
 //#include <linux/inventec/d5254/transceiver.h>
 extern int io_no_init;
 #define DETECT_TYPE_TIMEOUT (20)
+#define QSFP_DATA_READY_CHECK_TIMEOUT_MS (1000)
+#define QSFP_DATA_READY_CHECK_DELAY_MS (10)
+#define QSFP_DATA_READY_CHECK_NUM (QSFP_DATA_READY_CHECK_TIMEOUT_MS / QSFP_DATA_READY_CHECK_DELAY_MS)
 /* ========== Register EEPROM address mapping ==========
  */
 struct eeprom_map_s eeprom_map_sfp = {
@@ -6590,7 +6593,44 @@ err_taskfunc_sfp_handle_1g_rj45_2:
     }
     return EVENT_TRANSVR_TASK_FAIL;
 }
+static int qsfp_data_ready_check(struct transvr_obj_s *self)
+{
 
+    /* [Return]
+     *   EVENT_TRANSVR_TASK_DONE : Ready
+     *   EVENT_TRANSVR_TASK_WAIT : Not ready
+     *   EVENT_TRANSVR_INIT_FAIL : Error
+     */
+    int addr   = VAL_TRANSVR_8436_READY_ADDR;
+    int page   = VAL_TRANSVR_8436_READY_PAGE;
+    int offs   = VAL_TRANSVR_8436_READY_OFFSET;
+    int bit    = VAL_TRANSVR_8436_READY_BIT;
+    int ready  = VAL_TRANSVR_8436_READY_VALUE;
+    int err    = DEBUG_TRANSVR_INT_VAL;
+    char *emsg = DEBUG_TRANSVR_STR_VAL;
+
+    /* Select target page */
+    err = _common_setup_page(self, addr, page, offs, 1, 0);
+    if (err < 0) {
+        emsg = "setup page fail";
+        goto err_data_check;
+    }
+    /* Get Status Indicators */
+    err = i2c_smbus_read_byte_data(self->i2c_client_p, offs);
+    if (err < 0) {
+        emsg = "detect current value fail";
+        goto err_data_check;
+    }
+    if ((err & (1<<bit)) == ready) {
+        return EVENT_TRANSVR_TASK_DONE;
+    }
+
+    return EVENT_TRANSVR_TASK_WAIT;
+
+err_data_check:
+    SWPS_INFO("%s %s: %s 0x%x\n", self->swp_name, __func__, emsg, err);
+    return EVENT_TRANSVR_INIT_FAIL;
+}
 
 int
 _taskfunc_qsfp_setup_power_mod(struct transvr_obj_s *self,
@@ -6599,6 +6639,8 @@ _taskfunc_qsfp_setup_power_mod(struct transvr_obj_s *self,
     int curr_val   = DEBUG_TRANSVR_INT_VAL;
     int err_val    = DEBUG_TRANSVR_INT_VAL;
     char *err_msg  = DEBUG_TRANSVR_STR_VAL;
+    int i = 0;
+    int check_num = QSFP_DATA_READY_CHECK_NUM;
     if (io_no_init) {
 
         SWPS_INFO("%s no_io_init\n",__func__);
@@ -6621,11 +6663,29 @@ _taskfunc_qsfp_setup_power_mod(struct transvr_obj_s *self,
         err_msg = "Setup power mode fail!";
         goto err_private_taskfunc_qsfp_setup_power_mod_1;
     }
+    /*check if data is ready in high power mode*/
+    if (0 == setup_val) {
+
+        for (i = 0 ; i < check_num; i++) {
+
+            if ((err_val = qsfp_data_ready_check(self)) == EVENT_TRANSVR_TASK_DONE) {
+                break;
+            }
+            msleep(QSFP_DATA_READY_CHECK_DELAY_MS);
+        }
+        if (i >= check_num) {
+            err_msg = "qsfp_ready_check fail";
+            goto err_private_taskfunc_qsfp_setup_power_mod_1;
+        } else if (i != 0) {
+            SWPS_INFO("%s qsfp_data gets ready in %dms\n", self->swp_name, i*QSFP_DATA_READY_CHECK_DELAY_MS);
+        }
+    }
+
     return EVENT_TRANSVR_TASK_DONE;
 
 err_private_taskfunc_qsfp_setup_power_mod_1:
-    SWPS_INFO("%s: %s <err>:%d <curr>:%d <input>:%d\n",
-              __func__, err_msg, err_val, curr_val, setup_val);
+    SWPS_INFO("%s %s: %s <err>:%d <curr>:%d <input>:%d\n",
+              __func__, self->swp_name, err_msg, err_val, curr_val, setup_val);
     return EVENT_TRANSVR_TASK_FAIL;
 }
 
@@ -9305,6 +9365,8 @@ _is_transvr_hw_ready(struct transvr_obj_s *self,
         emsg = "detect using unusual definition.";
         goto bypass_is_transvr_hw_ready;
     }
+/*skip data ready check in this stage , move the check in qsfp_data_ready_check() instead*/
+#if 0
     /* Get Status Indicators */
     err = i2c_smbus_read_byte_data(self->i2c_client_p, offs);
     if (err < 0) {
@@ -9315,7 +9377,10 @@ _is_transvr_hw_ready(struct transvr_obj_s *self,
         return EVENT_TRANSVR_TASK_DONE;
     }
     return EVENT_TRANSVR_TASK_WAIT;
+#else
+    return EVENT_TRANSVR_TASK_DONE;
 
+#endif
 bypass_is_transvr_hw_ready:
     SWPS_DEBUG("%s: %s <type>:%d\n", __func__, emsg, type);
     return EVENT_TRANSVR_TASK_DONE;

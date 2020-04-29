@@ -17,7 +17,7 @@
 /* Module information */
 #define SWP_AUTHOR            "Neil <liao.neil@inventec.com>"
 #define SWP_DESC              "Inventec port and transceiver driver"
-#define SWP_VERSION           "4.3.7"
+#define SWP_VERSION           "JD.4.3.8"
 #define SWP_LICENSE           "GPL"
 
 /* Module status define */

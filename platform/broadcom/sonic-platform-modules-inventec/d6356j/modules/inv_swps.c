@@ -274,7 +274,7 @@ show_attr_version(struct device *dev_p,
                   struct device_attribute *attr_p,
                   char *buf_p){
 
-    return snprintf(buf_p, 8, "%s\n", SWP_VERSION);
+    return snprintf(buf_p, PAGE_SIZE, "%s\n", SWP_VERSION);
 }
 
 
